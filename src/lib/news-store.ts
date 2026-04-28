@@ -285,13 +285,15 @@ export async function persistNewsSnapshot({
   items,
   benchmarks,
 }: {
-  mode: "interval" | "digest" | "manual";
+  mode: "interval" | "digest" | "manual" | "scrape";
   items: NewsItem[];
   benchmarks: BenchmarkSummary[];
 }): Promise<PersistResult> {
+  console.log("[news-store] persistNewsSnapshot mode:", mode, "items:", items.length);
   const runId = crypto.randomUUID();
 
   if (!hasSupabaseEnv()) {
+    console.log("[news-store] missing Supabase env, skipping");
     return {
       runId,
       persistedCount: 0,

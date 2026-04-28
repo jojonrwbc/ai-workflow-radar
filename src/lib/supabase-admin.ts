@@ -3,9 +3,10 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 let cachedClient: SupabaseClient | null = null;
 
 export function hasSupabaseEnv(): boolean {
-  return Boolean(
-    process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY,
-  );
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  console.log("[supabase-admin] hasSupabaseEnv:", { url: !!url, key: !!key });
+  return Boolean(url && key);
 }
 
 export function getSupabaseAdminClient(): SupabaseClient {
