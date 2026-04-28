@@ -82,6 +82,30 @@ Vercel cron schedule is defined in `vercel.json`:
 
 Note: Vercel cron uses UTC. `0 4 * * *` equals 06:00 in Berlin during summer time.
 
+## Observability
+
+This project now includes:
+- Sentry via `@sentry/nextjs` for error tracking and tracing
+- Vercel Web Analytics via `@vercel/analytics`
+- Vercel Speed Insights via `@vercel/speed-insights`
+
+Set these env vars in Vercel (and locally if needed):
+
+```bash
+NEXT_PUBLIC_SENTRY_DSN=...
+SENTRY_AUTH_TOKEN=...    # optional, only needed for source map upload
+SENTRY_ORG=...           # optional, only needed for source map upload
+SENTRY_PROJECT=...       # optional, only needed for source map upload
+```
+
+Then enable Web Analytics and Speed Insights in the Vercel project dashboard.
+
+## CI checks
+
+A GitHub Actions workflow runs on pushes and pull requests to `main`:
+- `.github/workflows/ci.yml`
+- Executes `npm run lint`, `npm test`, and `npm run build`
+
 ## 2-hour scheduler (Hobby-friendly)
 
 Use GitHub Actions workflows:
