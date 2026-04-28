@@ -16,9 +16,14 @@ const FEEDS: SourceFeed[] = [
     priorityWeight: 30,
   },
   {
-    name: "Anthropic News",
-    url: "https://www.anthropic.com/news/rss.xml",
+    name: "OpenAI News",
+    url: "https://openai.com/news/rss.xml",
     priorityWeight: 28,
+  },
+  {
+    name: "Hugging Face Blog",
+    url: "https://huggingface.co/blog/feed.xml",
+    priorityWeight: 25,
   },
   {
     name: "Hacker News",
