@@ -1,6 +1,10 @@
 import { Buffer } from "node:buffer";
 import { NextRequest, NextResponse } from "next/server";
-import { isPublicInternetHostname } from "@/lib/network-safety";
+import { fetch as undiciFetch } from "undici";
+import {
+  pinnedDispatcher,
+  resolveAndValidateHost,
+} from "@/lib/network-safety";
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_REDIRECTS = 3;
@@ -72,8 +76,8 @@ async function validateUrl(rawUrl: string): Promise<URL | null> {
     return null;
   }
 
-  const isHostAllowed = await isPublicInternetHostname(target.hostname);
-  return isHostAllowed ? target : null;
+  const resolved = await resolveAndValidateHost(target.hostname);
+  return resolved ? target : null;
 }
 
 async function fetchWithRedirectValidation(
@@ -82,15 +86,25 @@ async function fetchWithRedirectValidation(
 ): Promise<Response | { error: string; status: number }> {
   let current = initialUrl;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
-    const response = await fetch(current.toString(), {
-      headers: {
-        "User-Agent": "ai-workflow-radar/1.0",
-      },
-      redirect: "manual",
-      signal,
-      cache: "force-cache",
-      next: { revalidate: 60 * 60 * 24 },
-    });
+    const resolved = await resolveAndValidateHost(current.hostname);
+    if (!resolved) {
+      return { error: "Blocked target host", status: 400 };
+    }
+    const dispatcher = pinnedDispatcher(resolved);
+    let response: Response;
+    try {
+      const undiciResponse = await undiciFetch(current.toString(), {
+        headers: {
+          "User-Agent": "ai-workflow-radar/1.0",
+        },
+        redirect: "manual",
+        signal,
+        dispatcher,
+      });
+      response = undiciResponse as unknown as Response;
+    } finally {
+      await dispatcher.close().catch(() => {});
+    }
 
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");

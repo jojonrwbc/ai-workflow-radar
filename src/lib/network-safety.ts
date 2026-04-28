@@ -1,5 +1,6 @@
 import dns from "node:dns/promises";
 import { BlockList, isIP } from "node:net";
+import { Agent } from "undici";
 
 type HostDecision = {
   allowed: boolean;
@@ -49,6 +50,60 @@ function isBlockedHostname(hostname: string): boolean {
   }
 
   return false;
+}
+
+export type ResolvedHost = {
+  hostname: string;
+  ip: string;
+  family: 4 | 6;
+};
+
+export async function resolveAndValidateHost(
+  hostname: string,
+): Promise<ResolvedHost | null> {
+  const normalized = normalizeHostname(hostname);
+  if (!normalized || isBlockedHostname(normalized)) {
+    return null;
+  }
+
+  const ipFamily = isIP(normalized);
+  if (ipFamily > 0) {
+    if (isIpBlocked(normalized)) return null;
+    return {
+      hostname: normalized,
+      ip: normalized,
+      family: ipFamily as 4 | 6,
+    };
+  }
+
+  try {
+    const records = await dns.lookup(normalized, {
+      all: true,
+      verbatim: true,
+    });
+    for (const record of records) {
+      if (!isIpBlocked(record.address)) {
+        return {
+          hostname: normalized,
+          ip: record.address,
+          family: record.family as 4 | 6,
+        };
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function pinnedDispatcher(resolved: ResolvedHost): Agent {
+  return new Agent({
+    connect: {
+      lookup: (_hostname, _options, callback) => {
+        callback(null, resolved.ip, resolved.family);
+      },
+    },
+  });
 }
 
 export async function isPublicInternetHostname(hostname: string): Promise<boolean> {
