@@ -146,11 +146,13 @@ export async function listNewsItems(limit = 50): Promise<NewsItem[]> {
       .limit(limit);
 
     if (error || !data || data.length === 0) {
+      if (error) console.error("[news-store] listNewsItems supabase error:", error);
       return fallbackSortedNews(limit);
     }
 
     return (data as DbNewsItemRow[]).map(mapDbRowToNewsItem);
-  } catch {
+  } catch (err) {
+    console.error("[news-store] listNewsItems threw:", err);
     return fallbackSortedNews(limit);
   }
 }
@@ -169,11 +171,13 @@ export async function getNewsItemById(id: string): Promise<NewsItem | null> {
       .single();
 
     if (error || !data) {
+      if (error) console.error("[news-store] getNewsItemById supabase error:", error);
       return dailyNews.find((item) => item.id === id) ?? null;
     }
 
     return mapDbRowToNewsItem(data as DbNewsItemRow);
-  } catch {
+  } catch (err) {
+    console.error("[news-store] getNewsItemById threw:", err);
     return dailyNews.find((item) => item.id === id) ?? null;
   }
 }
@@ -185,34 +189,21 @@ export async function listLatestBenchmarks(): Promise<BenchmarkSummary[]> {
 
   try {
     const client = getSupabaseAdminClient();
-    const { data, error } = await client
-      .from("benchmark_snapshots")
-      .select("label, value, delta, score, captured_at")
-      .order("captured_at", { ascending: false })
-      .limit(250);
+    const { data, error } = await client.rpc("latest_benchmarks");
 
     if (error || !data || data.length === 0) {
+      if (error) console.error("[news-store] listLatestBenchmarks supabase error:", error);
       return benchmarkBoard;
     }
 
-    const latestByLabel = new Map<string, BenchmarkSummary>();
-    for (const row of data as DbBenchmarkSnapshotRow[]) {
-      if (!latestByLabel.has(row.label)) {
-        latestByLabel.set(row.label, {
-          label: row.label,
-          value: row.value,
-          delta: row.delta,
-          score: row.score,
-        });
-      }
-    }
-
-    if (latestByLabel.size === 0) {
-      return benchmarkBoard;
-    }
-
-    return Array.from(latestByLabel.values());
-  } catch {
+    return (data as DbBenchmarkSnapshotRow[]).map((row) => ({
+      label: row.label,
+      value: row.value,
+      delta: row.delta,
+      score: row.score,
+    }));
+  } catch (err) {
+    console.error("[news-store] listLatestBenchmarks threw:", err);
     return benchmarkBoard;
   }
 }
@@ -237,6 +228,7 @@ export async function getLatestIngestStatus(): Promise<IngestStatus> {
       .single();
 
     if (error || !data) {
+      if (error) console.error("[news-store] getLatestIngestStatus supabase error:", error);
       return {
         latestRunAt: null,
         latestRunStatus: "none",
@@ -269,12 +261,13 @@ export async function getLatestIngestStatus(): Promise<IngestStatus> {
       latestRunMode,
       latestRunError: data.error_message,
     };
-  } catch (error) {
+  } catch (err) {
+    console.error("[news-store] getLatestIngestStatus threw:", err);
     return {
       latestRunAt: null,
       latestRunStatus: "none",
       latestRunMode: "unknown",
-      latestRunError: error instanceof Error ? error.message : "Unknown error",
+      latestRunError: err instanceof Error ? err.message : "Unknown error",
     };
   }
 }
@@ -391,6 +384,7 @@ export async function persistNewsSnapshot({
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("[news-store] persistNewsSnapshot failed:", error);
 
     await client
       .from("ingest_runs")
