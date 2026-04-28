@@ -107,8 +107,34 @@ export async function resolveSourceImage(sourceUrl: string): Promise<string | nu
   }
 }
 
+const RESOLVE_CONCURRENCY = 5;
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  worker: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let cursor = 0;
+
+  async function next(): Promise<void> {
+    while (true) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= items.length) return;
+      results[index] = await worker(items[index]);
+    }
+  }
+
+  const runners = Array.from({ length: Math.min(limit, items.length) }, () => next());
+  await Promise.all(runners);
+  return results;
+}
+
 export async function withResolvedImages(items: NewsItem[]): Promise<NewsItem[]> {
-  const imageUrls = await Promise.all(items.map((item) => resolveSourceImage(item.sourceUrl)));
+  const imageUrls = await mapWithConcurrency(items, RESOLVE_CONCURRENCY, (item) =>
+    resolveSourceImage(item.sourceUrl),
+  );
 
   return items.map((item, index) => {
     const resolved = imageUrls[index];
