@@ -105,14 +105,18 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
-async function fetchFeedXml(feed: SourceFeed): Promise<string | null> {
-  try {
-    const url = new URL(feed.url);
-    const allowed = await isPublicInternetHostname(url.hostname);
-    if (!allowed) return null;
+async function fetchFeedAttempt(feed: SourceFeed): Promise<{
+  ok: boolean;
+  retriable: boolean;
+  body?: string;
+}> {
+  const url = new URL(feed.url);
+  const allowed = await isPublicInternetHostname(url.hostname);
+  if (!allowed) return { ok: false, retriable: false };
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
     const response = await fetch(feed.url, {
       signal: controller.signal,
       headers: {
@@ -121,18 +125,30 @@ async function fetchFeedXml(feed: SourceFeed): Promise<string | null> {
       },
       redirect: "follow",
       cache: "no-store",
-    }).finally(() => clearTimeout(timeout));
+    });
 
     if (!response.ok) {
       console.error(`[sources] ${feed.name} HTTP ${response.status}`);
-      return null;
+      return { ok: false, retriable: response.status >= 500 };
     }
 
-    return await response.text();
+    return { ok: true, retriable: false, body: await response.text() };
   } catch (err) {
     console.error(`[sources] ${feed.name} fetch failed:`, err);
-    return null;
+    return { ok: false, retriable: true };
+  } finally {
+    clearTimeout(timeout);
   }
+}
+
+async function fetchFeedXml(feed: SourceFeed): Promise<string | null> {
+  const first = await fetchFeedAttempt(feed);
+  if (first.ok) return first.body ?? null;
+  if (!first.retriable) return null;
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  const retry = await fetchFeedAttempt(feed);
+  return retry.ok ? retry.body ?? null : null;
 }
 
 function extractLink(link: unknown): string {
@@ -316,10 +332,15 @@ function buildNewsItem(raw: RawFeedItem): NewsItem | null {
 }
 
 export async function collectFromSources(): Promise<NewsItem[]> {
-  const xmls = await Promise.all(FEEDS.map((feed) => fetchFeedXml(feed)));
+  const settled = await Promise.allSettled(FEEDS.map((feed) => fetchFeedXml(feed)));
   const rawItems: RawFeedItem[] = [];
   for (let i = 0; i < FEEDS.length; i += 1) {
-    const xml = xmls[i];
+    const result = settled[i];
+    if (result.status === "rejected") {
+      console.error(`[sources] ${FEEDS[i].name} unhandled rejection:`, result.reason);
+      continue;
+    }
+    const xml = result.value;
     if (!xml) continue;
     rawItems.push(...parseFeed(xml, FEEDS[i]));
   }

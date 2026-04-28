@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { runIngestion } from "@/lib/ingestion";
 
 function isAuthorized(request: NextRequest): boolean {
@@ -7,7 +8,13 @@ function isAuthorized(request: NextRequest): boolean {
   if (!cronSecret || cronSecret.length === 0) {
     return false;
   }
-  return authHeader === `Bearer ${cronSecret}`;
+  const expected = `Bearer ${cronSecret}`;
+  const encoder = new TextEncoder();
+  try {
+    return timingSafeEqual(encoder.encode(authHeader || ""), encoder.encode(expected));
+  } catch {
+    return false;
+  }
 }
 
 export async function GET(request: NextRequest) {
