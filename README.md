@@ -4,12 +4,17 @@ Mobile-first News App for daily AI updates with focus on MCP, CLI, OSS tooling a
 
 ## What is implemented now
 
-- Feed and article pages read data from `/api/feed` and `/api/feed/[id]`
-- Benchmarks read data from `/api/benchmarks`
+- Server-rendered home (`src/app/page.tsx`) hydrates feed + benchmarks from Supabase, with client-side polling refresh
+- Article pages read data from `/api/feed/[id]`
+- Real RSS/Atom ingestion (`src/lib/sources.ts`) from:
+  - Simon Willison
+  - Anthropic News
+  - Hacker News (frontpage)
+- Relevance filter on AI/MCP/CLI/agent keywords; falls back to seed (`src/lib/feed-data.ts`) when fewer than 3 real items collected
 - Supabase persistence for:
   - `news_items` (current canonical feed state)
   - `news_ingest_events` (history snapshots per run)
-  - `benchmark_snapshots` (time-series benchmark values)
+  - `benchmark_snapshots` (time-series benchmark values, queried via `latest_benchmarks()` RPC)
   - `ingest_runs` (pipeline run status and errors)
 - Scheduled ingestion endpoints:
   - `GET /api/cron/ingest` daily (configured for 04:00 UTC)
@@ -19,6 +24,8 @@ Mobile-first News App for daily AI updates with focus on MCP, CLI, OSS tooling a
 - Scheduler options:
   - Vercel daily cron (`vercel.json`)
   - GitHub Actions for 2-hour cadence (`.github/workflows/*`)
+- Hardened `/api/source-image` proxy: SSRF BlockList, manual redirect validation (max 3 hops), 6s timeout, 8MB body cap
+- `/api/repo-assessment` with strict `repo` regex validation, npm package validation, in-memory IP rate limit (30/min)
 
 ## Local development
 
