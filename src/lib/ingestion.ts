@@ -5,6 +5,9 @@ import {
   NewsItem,
 } from "@/lib/feed-data";
 import { persistNewsSnapshot } from "@/lib/news-store";
+import { collectFromSources } from "@/lib/sources";
+
+const MIN_REAL_ITEMS = 3;
 
 function rankNews(items: NewsItem[]): NewsItem[] {
   return [...items].sort((a, b) => {
@@ -17,6 +20,14 @@ function rankNews(items: NewsItem[]): NewsItem[] {
 }
 
 export async function collectNewsItems(): Promise<NewsItem[]> {
+  const fromSources = await collectFromSources();
+  if (fromSources.length >= MIN_REAL_ITEMS) {
+    return rankNews(fromSources);
+  }
+
+  console.warn(
+    `[ingestion] only ${fromSources.length} real items collected, falling back to seed`,
+  );
   return rankNews(dailyNews);
 }
 
