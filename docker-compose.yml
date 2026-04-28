@@ -1,0 +1,11 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-workflow-radar:local
+    container_name: ai-workflow-radar
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local

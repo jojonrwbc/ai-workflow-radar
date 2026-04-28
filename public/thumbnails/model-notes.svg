@@ -1,0 +1,12 @@
+<svg width="1200" height="700" viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <rect width="1200" height="700" fill="#F7F8FF"/>
+  <rect x="158" y="98" width="884" height="504" rx="28" fill="#FFFFFF" stroke="#DBE2FF" stroke-width="4"/>
+  <rect x="212" y="168" width="614" height="26" rx="13" fill="#B7C9FF"/>
+  <rect x="212" y="226" width="770" height="18" rx="9" fill="#DEE7FF"/>
+  <rect x="212" y="268" width="690" height="18" rx="9" fill="#DEE7FF"/>
+  <rect x="212" y="310" width="752" height="18" rx="9" fill="#DEE7FF"/>
+  <rect x="212" y="352" width="514" height="18" rx="9" fill="#DEE7FF"/>
+  <rect x="212" y="416" width="206" height="54" rx="15" fill="#DFF7F1"/>
+  <text x="234" y="451" fill="#187C69" font-size="28" font-family="Arial, sans-serif">Stable</text>
+  <text x="212" y="546" fill="#293A78" font-size="50" font-family="Arial, sans-serif" font-weight="700">Model Notes</text>
+</svg>

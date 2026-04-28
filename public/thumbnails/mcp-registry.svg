@@ -1,0 +1,11 @@
+<svg width="1200" height="700" viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <rect width="1200" height="700" fill="#E7F0FF"/>
+  <circle cx="206" cy="160" r="130" fill="#BFD6FF"/>
+  <circle cx="1010" cy="540" r="170" fill="#C7F2EA"/>
+  <rect x="170" y="212" width="860" height="286" rx="24" fill="#FCFEFF" stroke="#A4C3FF" stroke-width="4"/>
+  <rect x="222" y="270" width="296" height="18" rx="9" fill="#9DB9F7"/>
+  <rect x="222" y="312" width="610" height="18" rx="9" fill="#D3E0FF"/>
+  <rect x="222" y="354" width="528" height="18" rx="9" fill="#D3E0FF"/>
+  <rect x="824" y="270" width="154" height="112" rx="18" fill="#E5F8F4"/>
+  <text x="222" y="452" fill="#264A8F" font-size="54" font-family="Arial, sans-serif" font-weight="700">MCP Registry</text>
+</svg>

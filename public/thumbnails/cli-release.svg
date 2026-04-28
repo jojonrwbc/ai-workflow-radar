@@ -1,0 +1,11 @@
+<svg width="1200" height="700" viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <rect width="1200" height="700" fill="#EEF7FF"/>
+  <rect x="125" y="140" width="950" height="430" rx="28" fill="#13233A"/>
+  <circle cx="182" cy="194" r="10" fill="#FF8A7C"/>
+  <circle cx="218" cy="194" r="10" fill="#FFCC65"/>
+  <circle cx="254" cy="194" r="10" fill="#67D089"/>
+  <text x="185" y="280" fill="#92ACD4" font-size="44" font-family="Courier New, monospace">gh pr status</text>
+  <text x="185" y="356" fill="#A9C5F7" font-size="44" font-family="Courier New, monospace">gh run list --limit 5</text>
+  <rect x="185" y="420" width="380" height="44" rx="10" fill="#254875"/>
+  <text x="208" y="452" fill="#DCE8FF" font-size="28" font-family="Arial, sans-serif">CLI Automation Update</text>
+</svg>

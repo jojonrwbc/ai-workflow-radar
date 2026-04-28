@@ -1,36 +1,117 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Workflow Radar
 
-## Getting Started
+Mobile-first News App for daily AI updates with focus on MCP, CLI, OSS tooling and benchmark deltas.
 
-First, run the development server:
+## What is implemented now
+
+- Feed and article pages read data from `/api/feed` and `/api/feed/[id]`
+- Benchmarks read data from `/api/benchmarks`
+- Supabase persistence for:
+  - `news_items` (current canonical feed state)
+  - `news_ingest_events` (history snapshots per run)
+  - `benchmark_snapshots` (time-series benchmark values)
+  - `ingest_runs` (pipeline run status and errors)
+- Scheduled ingestion endpoints:
+  - `GET /api/cron/ingest` daily (configured for 04:00 UTC)
+  - `GET /api/cron/digest` daily digest endpoint
+- Ingest status endpoint:
+  - `GET /api/status`
+- Scheduler options:
+  - Vercel daily cron (`vercel.json`)
+  - GitHub Actions for 2-hour cadence (`.github/workflows/*`)
+
+## Local development
+
+Requirements:
+- Node.js 20+
+- npm 10+
+
+Install and run:
 
 ```bash
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a Supabase project.
+2. Run SQL from `supabase/schema.sql` in Supabase SQL editor.
+3. Fill env vars in `.env.local`:
 
-## Learn More
+```bash
+SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+CRON_SECRET=...
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. Seed first snapshot manually:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/ingest
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`CRON_SECRET` is required for `/api/cron/*` endpoints. Requests without a matching `Authorization: Bearer ...` header are rejected.
 
-## Deploy on Vercel
+When Supabase env vars are missing, app falls back to `src/lib/feed-data.ts`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Vercel deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Production app:
+- [https://ai-workflow-radar.vercel.app](https://ai-workflow-radar.vercel.app)
+
+After setting env vars in Vercel project settings, redeploy:
+
+```bash
+vercel deploy --prod
+```
+
+Vercel cron schedule is defined in `vercel.json`:
+- `0 4 * * *` → `/api/cron/ingest`
+
+Note: Vercel cron uses UTC. `0 4 * * *` equals 06:00 in Berlin during summer time.
+
+## 2-hour scheduler (Hobby-friendly)
+
+Use GitHub Actions workflows:
+- `.github/workflows/ingest-every-2h.yml` at `10 */2 * * *`
+- `.github/workflows/digest-daily.yml` at `35 4 * * *`
+
+Required GitHub repository secrets:
+- `AWR_APP_URL` = `https://ai-workflow-radar.vercel.app`
+- `AWR_CRON_SECRET` = same value as `CRON_SECRET` in Vercel env vars
+
+## Docker (deploy-ready baseline)
+
+Build and run with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+App runs on [http://localhost:3000](http://localhost:3000)
+
+## API routes
+
+- `GET /api/feed?limit=120`
+- `GET /api/feed/:id`
+- `GET /api/benchmarks`
+- `GET /api/repo-assessment?repo=<owner/name>&category=<...>`
+- `GET /api/cron/ingest`
+- `GET /api/cron/digest`
+- `GET /api/status`
+
+## Folder overview
+
+- `src/lib/feed-data.ts` seed data and shared types
+- `src/lib/news-store.ts` Supabase read/write and fallback logic
+- `src/lib/ingestion.ts` ingestion orchestration
+- `src/lib/repo-assessment.ts` GitHub-based repo scoring
+- `src/app/api/*` app APIs and cron endpoints
+- `.github/workflows/*` external schedulers for Hobby plan
+- `supabase/schema.sql` database schema
+- `vercel.json` cron configuration

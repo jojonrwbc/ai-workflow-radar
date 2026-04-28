@@ -1,0 +1,11 @@
+<svg width="1200" height="700" viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <rect width="1200" height="700" fill="#F7FCFF"/>
+  <rect x="150" y="124" width="900" height="452" rx="30" fill="#FFFFFF" stroke="#CCE7FF" stroke-width="4"/>
+  <rect x="240" y="450" width="120" height="60" rx="8" fill="#CFE3FF"/>
+  <rect x="390" y="390" width="120" height="120" rx="8" fill="#A8CBFF"/>
+  <rect x="540" y="342" width="120" height="168" rx="8" fill="#76ACFF"/>
+  <rect x="690" y="294" width="120" height="216" rx="8" fill="#4E91FF"/>
+  <rect x="840" y="240" width="120" height="270" rx="8" fill="#1F75FF"/>
+  <text x="242" y="244" fill="#2D508C" font-size="30" font-family="Arial, sans-serif">Leaderboard Shift</text>
+  <text x="238" y="545" fill="#2857A0" font-size="52" font-family="Arial, sans-serif" font-weight="700">Benchmark Delta</text>
+</svg>

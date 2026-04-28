@@ -1,0 +1,11 @@
+<svg width="1200" height="700" viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <rect width="1200" height="700" fill="#F4FBFF"/>
+  <rect x="140" y="120" width="920" height="460" rx="30" fill="#FFFFFF" stroke="#C3E3FF" stroke-width="4"/>
+  <polyline points="220,480 360,390 470,418 620,312 760,328 910,236" stroke="#2D7AF8" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="360" cy="390" r="12" fill="#1FB89A"/>
+  <circle cx="620" cy="312" r="12" fill="#1FB89A"/>
+  <circle cx="910" cy="236" r="12" fill="#1FB89A"/>
+  <rect x="220" y="196" width="252" height="38" rx="10" fill="#EAF2FF"/>
+  <text x="232" y="222" fill="#2A4E92" font-size="24" font-family="Arial, sans-serif">Agent Benchmark</text>
+  <text x="220" y="550" fill="#20539A" font-size="52" font-family="Arial, sans-serif" font-weight="700">Open Eval</text>
+</svg>
