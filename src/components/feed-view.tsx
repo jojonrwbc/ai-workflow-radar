@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle, LanguageToggle } from "@/components/theme-toggle";
 import type { BenchmarkSummary, NewsItem } from "@/lib/feed-data";
 
 type ViewMode = "builder" | "ai-world" | "releases" | "saved";
@@ -97,9 +97,15 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
       setIsRefreshing(true);
     }
 
+    function getLanguage(): "de" | "en" {
+  if (typeof window === "undefined") return "de";
+  return (localStorage.getItem("awr-language") as "de" | "en") || "de";
+}
+
     try {
+      const lang = getLanguage();
       const [feedResponse, benchmarkResponse] = await Promise.all([
-        fetch("/api/feed?limit=120", {
+        fetch(`/api/feed?limit=120&lang=${lang}`, {
           signal: options?.signal,
           cache: "no-store",
         }),
@@ -265,6 +271,7 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
             AI Workflow Radar
           </p>
           <ThemeToggle />
+          <LanguageToggle />
         </div>
         <h1 className="mt-3 max-w-3xl display text-4xl leading-[1.05] text-[var(--ink)] sm:text-5xl">
           Daily AI feed, reduziert auf das, was wirklich nutzbar ist.
@@ -340,90 +347,73 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
 
       <main className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
         <section className="space-y-4">
-          {visibleItems.map((item) => (
+          {visibleItems.map((item, index) => (
             <article
               key={item.id}
               className="overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--bg-panel)]"
             >
-              <div className="relative h-44 w-full">
-                <Image
-                  src={item.imagePath}
-                  alt={item.imageLabel}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 65vw"
-                  unoptimized={shouldBypassImageOptimizer(item.imagePath)}
-                />
-                <Link
-                  href={`/article/${item.id}`}
-                  className="absolute inset-0 z-10"
-                  aria-label={`Zum Artikel ${item.title}`}
-                />
-                <div className="absolute left-3 top-3 z-20 rounded-full border border-[var(--line)] bg-[var(--bg-panel)]/90 px-2.5 py-1 text-xs font-medium text-[var(--ink)]">
-                  {item.category}
-                </div>
-              </div>
-
-              <div className="space-y-3 p-4 sm:p-5">
-                <div className="flex items-center justify-between gap-3 text-xs text-[var(--muted)]">
-                  <span>{formatDate(item.publishedAt)}</span>
-                  <span className="rounded-full bg-[var(--bg-soft)] px-2.5 py-1 font-medium text-[var(--ink)]">
-                    Score {item.score}
-                  </span>
+              <Link href={`/article/${item.id}`} className="block">
+                <div className="relative h-44 w-full">
+                  <Image
+                    src={item.imagePath}
+                    alt={item.imageLabel}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 65vw"
+                    unoptimized={shouldBypassImageOptimizer(item.imagePath)}
+                    priority={index === 0}
+                    fetchPriority={index === 0 ? "high" : "auto"}
+                    loading={index === 0 ? "eager" : "lazy"}
+                  />
+                  <div className="absolute left-3 top-3 z-20 rounded-full border border-[var(--line)] bg-[var(--bg-panel)]/90 px-2.5 py-1 text-xs font-medium text-[var(--ink)]">
+                    {item.category}
+                  </div>
                 </div>
 
-                <h2 className="text-xl font-semibold leading-snug text-[var(--ink)]">
-                  {item.title}
-                </h2>
-                <p className="text-sm leading-6 text-[var(--muted)]">{item.lead}</p>
-
-                <div className="rounded-xl bg-[var(--bg-soft)] px-3 py-2.5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                    Warum relevant
-                  </p>
-                  <p className="mt-1 text-sm text-[var(--ink)]">{item.whyItMatters}</p>
-                </div>
-
-                {item.benchmark ? (
-                  <div className="flex items-center justify-between rounded-xl border border-[var(--line)] px-3 py-2 text-sm">
-                    <div>
-                      <p className="font-medium text-[var(--ink)]">{item.benchmark.label}</p>
-                      <p className="text-[var(--muted)]">{item.benchmark.value}</p>
-                    </div>
-                    <span className="rounded-full bg-[var(--bg-soft)] px-2.5 py-1 text-xs font-medium text-[var(--ink)]">
-                      {item.benchmark.delta}
+                <div className="space-y-3 p-4 sm:p-5">
+                  <div className="flex items-center justify-between gap-3 text-xs text-[var(--muted)]">
+                    <span>{formatDate(item.publishedAt)}</span>
+                    <span className="rounded-full bg-[var(--bg-soft)] px-2.5 py-1 font-medium text-[var(--ink)]">
+                      Score {item.score}
                     </span>
                   </div>
-                ) : null}
 
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--muted)]">
-                  <span>{item.sourceName}</span>
-                  <a
-                    href={item.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-[var(--ink)] hover:underline"
-                  >
-                    Quelle ansehen
-                  </a>
+                  <h2 className="text-xl font-semibold leading-snug text-[var(--ink)]">
+                    {item.title}
+                  </h2>
+                  <p className="text-sm leading-6 text-[var(--muted)]">{item.lead}</p>
                 </div>
+              </Link>
 
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <Link
-                    href={`/article/${item.id}`}
-                    className="rounded-full border border-[var(--accent)] bg-[var(--accent)] px-3 py-2 text-center text-sm font-medium text-white transition hover:opacity-90"
-                  >
-                    Artikel lesen
-                  </Link>
-                  <a
-                    href={item.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-full border border-[var(--line)] bg-[var(--bg-panel)] px-3 py-2 text-center text-sm font-medium text-[var(--ink)] transition hover:bg-[var(--bg-soft)]"
-                  >
-                    Originalquelle
-                  </a>
+              <div className="rounded-xl bg-[var(--bg-soft)] px-3 py-2.5">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                  Warum relevant
+                </p>
+                <p className="mt-1 text-sm text-[var(--ink)]">{item.whyItMatters}</p>
+              </div>
+
+              {item.benchmark ? (
+                <div className="flex items-center justify-between rounded-xl border border-[var(--line)] px-3 py-2 text-sm">
+                  <div>
+                    <p className="font-medium text-[var(--ink)]">{item.benchmark.label}</p>
+                    <p className="text-[var(--muted)]">{item.benchmark.value}</p>
+                  </div>
+                  <span className="rounded-full bg-[var(--bg-soft)] px-2.5 py-1 text-xs font-medium text-[var(--ink)]">
+                    {item.benchmark.delta}
+                  </span>
                 </div>
+              ) : null}
+
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--muted)]">
+                <span>{item.sourceName}</span>
+                <a
+                  href={item.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-[var(--ink)] hover:underline"
+                >
+                  Quelle ansehen
+                </a>
               </div>
             </article>
           ))}

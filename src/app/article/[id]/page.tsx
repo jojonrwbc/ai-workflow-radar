@@ -107,13 +107,21 @@ export default function ArticlePage() {
 
         <div className="space-y-4 p-5 sm:p-6">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-radar-muted">
-              Score {item.score}
-            </p>
-            <h1 className="mt-2 font-[var(--font-display)] text-3xl leading-tight text-radar-ink">
+            <h1 className="font-[var(--font-display)] text-3xl leading-tight text-radar-ink">
               {item.title}
             </h1>
             <p className="mt-2 text-sm text-radar-muted">{formatDate(item.publishedAt)}</p>
+            <details className="group mt-3">
+              <summary className="cursor-pointer list-none text-xs font-semibold uppercase tracking-[0.08em] text-radar-muted hover:text-radar-ink">
+                Signal {item.signal} <span className="ml-2 text-radar-muted/60 group-open:hidden">+ Details</span><span className="ml-2 text-radar-muted/60 hidden group-open:inline">- Schliessen</span>
+              </summary>
+              <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-radar-muted">
+                <dt>Score</dt><dd className="text-radar-ink">{item.score}</dd>
+                <dt>Novelty</dt><dd className="text-radar-ink">{item.novelty}</dd>
+                <dt>Workflow Fit</dt><dd className="text-radar-ink">{item.workflowFit}</dd>
+                <dt>Obscurity</dt><dd className="text-radar-ink">{item.obscurity}</dd>
+              </dl>
+            </details>
           </div>
 
           <section className="rounded-xl border border-radar-stroke bg-radar-soft p-4">
