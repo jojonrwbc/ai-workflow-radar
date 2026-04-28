@@ -77,3 +77,20 @@ create trigger trg_news_items_updated_at
 before update on news_items
 for each row
 execute function set_updated_at();
+
+create or replace function latest_benchmarks()
+returns table (
+  label text,
+  value text,
+  delta text,
+  score integer,
+  captured_at timestamptz
+)
+language sql
+stable
+as $$
+  select distinct on (label)
+    label, value, delta, score, captured_at
+  from benchmark_snapshots
+  order by label, captured_at desc;
+$$;
