@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { NewsCategory } from "@/lib/feed-data";
 import { getRepoAssessment } from "@/lib/repo-assessment";
-
-const REPO_FULLNAME_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,38})\/[A-Za-z0-9_.-]{1,100}$/;
-const NPM_PACKAGE_PATTERN = /^(?:@[A-Za-z0-9_.-]{1,64}\/)?[A-Za-z0-9_.-]{1,100}$/;
+import { REPO_FULLNAME_PATTERN, NPM_PACKAGE_PATTERN } from "@/lib/validators";
 
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX = 30;

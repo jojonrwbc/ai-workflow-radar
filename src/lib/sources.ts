@@ -229,7 +229,7 @@ function parseFeed(xml: string, feed: SourceFeed): RawFeedItem[] {
   return [];
 }
 
-function categorize(title: string, lead: string): NewsCategory {
+export function categorize(title: string, lead: string): NewsCategory {
   const hay = `${title} ${lead}`.toLowerCase();
 
   if (/\b(mcp|model context protocol)\b/.test(hay)) return "MCP";
@@ -247,12 +247,12 @@ function categorize(title: string, lead: string): NewsCategory {
   return "Open Source";
 }
 
-function isRelevant(title: string, lead: string): boolean {
+export function isRelevant(title: string, lead: string): boolean {
   const hay = `${title} ${lead}`.toLowerCase();
   return RELEVANCE_KEYWORDS.some((keyword) => hay.includes(keyword));
 }
 
-function recencyScore(publishedAt: string): number {
+export function recencyScore(publishedAt: string): number {
   const ts = new Date(publishedAt).getTime();
   if (Number.isNaN(ts)) return 10;
   const dayMs = 24 * 60 * 60 * 1000;
@@ -265,7 +265,7 @@ function recencyScore(publishedAt: string): number {
   return 2;
 }
 
-function keywordScore(title: string, lead: string): number {
+export function keywordScore(title: string, lead: string): number {
   const hay = `${title} ${lead}`.toLowerCase();
   let hits = 0;
   for (const keyword of RELEVANCE_KEYWORDS) {
