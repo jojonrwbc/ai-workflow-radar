@@ -20,10 +20,6 @@ function shouldBypassImageOptimizer(src: string): boolean {
   return src.startsWith("/api/source-image?");
 }
 
-function isLocalProxyImage(src: string): boolean {
-  return src.startsWith("/api/source-image?");
-}
-
 export default function ArticlePage() {
   const params = useParams<{ id: string }>();
   const articleId = typeof params.id === "string" ? params.id : "";
@@ -95,23 +91,15 @@ export default function ArticlePage() {
 
       <article className="overflow-hidden rounded-2xl border border-radar-stroke bg-radar-panel">
         <div className="relative h-56 w-full sm:h-72">
-          {isLocalProxyImage(item.imagePath) ? (
-            <img
-              src={item.imagePath}
-              alt={item.imageLabel}
-              className="absolute inset-0 h-full w-full object-cover"
-              loading="eager"
-            />
-          ) : (
-            <Image
-              src={item.imagePath}
-              alt={item.imageLabel}
-              fill
-              className="object-cover"
-              sizes="100vw"
-              unoptimized={shouldBypassImageOptimizer(item.imagePath)}
-            />
-          )}
+          <Image
+            src={item.imagePath}
+            alt={item.imageLabel}
+            fill
+            className="object-cover"
+            sizes="100vw"
+            priority
+            unoptimized={shouldBypassImageOptimizer(item.imagePath)}
+          />
           <div className="absolute left-4 top-4 rounded-full border border-radar-stroke bg-radar-panel px-3 py-1 text-xs font-medium text-radar-ink">
             {item.category}
           </div>
