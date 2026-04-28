@@ -1,21 +1,35 @@
 import type { Metadata } from "next";
-import { Manrope, Newsreader } from "next/font/google";
+import { Inter, Newsreader, JetBrains_Mono, Caveat } from "next/font/google";
 import "./globals.css";
 
-const manrope = Manrope({
-  variable: "--font-manrope",
+const inter = Inter({
+  variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const newsreader = Newsreader({
-  variable: "--font-newsreader",
+  variable: "--font-serif",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const caveat = Caveat({
+  variable: "--font-hand",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "AI Workflow Radar",
   description:
-    "Mobile-first AI news app focused on practical MCP, CLI, and OSS workflow updates.",
+    "Daily AI feed, reduziert auf das, was wirklich nutzt. MCP, CLI, OSS, Benchmarks.",
 };
 
 export default function RootLayout({
@@ -25,10 +39,12 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      className={`${manrope.variable} ${newsreader.variable} h-full antialiased`}
+      lang="de"
+      className={`${inter.variable} ${newsreader.variable} ${jetbrains.variable} ${caveat.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-radar-page text-radar-ink">
+        {children}
+      </body>
     </html>
   );
 }
