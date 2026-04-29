@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   title: "Hook AI",
   applicationName: "Hook AI",
   description:
-    "Wir fischen die Signale aus dem KI-Rauschen. Daily Feed für Builder.",
+    "Hook AI. Signale aus dem Rauschen. Daily Feed für Builder.",
   appleWebApp: {
     capable: true,
     title: "Hook AI",

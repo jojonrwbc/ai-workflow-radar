@@ -535,23 +535,14 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
         className="rounded-3xl border border-[var(--line)] bg-[var(--bg-panel)] px-5 py-6 sm:px-7"
       >
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--accent)"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="drop-shadow-sm"
-              aria-hidden="true"
-            >
-              <path d="M12 3v12a4 4 0 0 1-8 0" />
-              <circle cx="12" cy="3" r="2" fill="var(--bg-panel)" />
-            </svg>
-            <span className="font-sans font-bold tracking-tight text-[var(--ink)]">Hook AI</span>
+          <div className="flex items-baseline gap-1 group cursor-default select-none">
+            <span className="font-serif text-2xl font-bold tracking-tighter text-[var(--ink)] uppercase">
+              Hook
+            </span>
+            <span className="font-mono text-sm font-medium px-1.5 py-0.5 rounded bg-[var(--ink)] text-[var(--bg-page)] leading-none">
+              AI
+            </span>
+            <div className="w-1 h-1 rounded-full bg-[var(--accent)] ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           <div className="flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--bg-soft)] px-2 py-1">
             <button
@@ -586,11 +577,8 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
             <ThemeToggle />
           </div>
         </div>
-        <h1 className="mt-3 max-w-3xl text-4xl leading-[1.05] text-[var(--ink)] sm:text-5xl">
-          <span className="display">Hook AI.</span>{" "}
-          <span className="font-sans font-semibold tracking-tight">
-            Wir fischen die Signale aus dem KI-Rauschen.
-          </span>
+        <h1 className="mt-3 max-w-3xl text-4xl font-serif font-medium tracking-tight leading-[1.1] text-[var(--ink)]">
+          Hook AI. Signale aus dem Rauschen.
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--muted)]">
           Dein Daily Feed, reduziert auf das, was wirklich anbeißt. Builder-News, Open Source & Infra, AI-Welt und Releases.
@@ -605,7 +593,7 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
         style={{ height: `${Math.max(0, Math.min(pullDistance, 56))}px` }}
       >
         <div className="flex h-14 items-center justify-center text-xs text-[var(--muted)]">
-          {pullDistance > 42 ? "Loslassen zum Fischen..." : "Ziehen zum Auswerfen..."}
+          {pullDistance > 42 ? "Loslassen zum Fischen" : "Ziehen zum Auswerfen"}
         </div>
       </div>
 
@@ -624,7 +612,7 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
               key={item.id}
               type="button"
               onClick={() => openStory(index)}
-              className="w-28 shrink-0 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+              className="w-28 shrink-0 text-left transition-all duration-200 hover:-translate-y-1"
             >
               <div className="relative h-28 w-28 overflow-hidden rounded-full border border-[var(--line)] bg-[var(--bg-panel)]">
                 <NewsImage
