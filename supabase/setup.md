@@ -1,6 +1,6 @@
 # Supabase Setup Runbook
 
-One-time setup steps for the AI Workflow Radar Supabase project.
+One-time setup steps for the Hook AI Supabase project.
 Run each block in the **Supabase SQL Editor** unless noted otherwise.
 
 ## 1. Region check

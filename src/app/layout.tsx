@@ -29,9 +29,15 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "AI Workflow Radar",
+  title: "Hook AI",
+  applicationName: "Hook AI",
   description:
-    "Daily AI feed, reduziert auf das, was wirklich nutzt. MCP, CLI, OSS, Benchmarks.",
+    "Wir fischen die Signale aus dem KI-Rauschen. Daily Feed für Builder.",
+  appleWebApp: {
+    capable: true,
+    title: "Hook AI",
+    statusBarStyle: "default",
+  },
 };
 
 export default function RootLayout({

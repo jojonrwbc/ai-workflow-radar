@@ -1,4 +1,4 @@
-# AI Workflow Radar
+# Hook AI
 
 Mobile-first News App for daily AI updates with focus on MCP, CLI, OSS tooling and benchmark deltas.
 
@@ -54,6 +54,16 @@ SUPABASE_SERVICE_ROLE_KEY=...
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 CRON_SECRET=...
+
+# Optional: additional source tuning for Hook AI
+HOOKAI_ENABLE_REDDIT=true
+HOOKAI_REDDIT_SUBREDDITS=LocalLLaMA,MachineLearning,singularity,OpenAI
+HOOKAI_REDDIT_FEEDS=
+HOOKAI_ENABLE_YOUTUBE=true
+# Format: Name|@handle OR Name|UC... channel ID OR Name|https://youtube.com/@handle
+HOOKAI_YOUTUBE_CHANNELS=
+# Direct feed URLs if already known
+HOOKAI_YOUTUBE_FEEDS=
 ```
 
 4. Seed first snapshot manually:
@@ -66,10 +76,36 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/inge
 
 When Supabase env vars are missing, app falls back to `src/lib/feed-data.ts`.
 
+### Add YouTube and Reddit as Sources
+
+You can now ingest:
+- Reddit feeds (subreddit RSS, default enabled)
+- YouTube channel feeds (RSS via channel ID, handle, or channel URL)
+
+Recommended setup for your mentioned creators:
+1. Copy each channel URL (`https://www.youtube.com/@...`) or channel ID (`UC...`).
+2. Add them to `HOOKAI_YOUTUBE_CHANNELS` in `.env.local`:
+
+```bash
+HOOKAI_YOUTUBE_CHANNELS=\
+Jack Roberts|https://www.youtube.com/@...,\
+CT3003|https://www.youtube.com/@...,\
+Niklas Hansen|https://www.youtube.com/@...,\
+Christoph Magnussen|https://www.youtube.com/@...,\
+The Morpheus|https://www.youtube.com/@...,\
+Jason Lee|https://www.youtube.com/@...
+```
+
+For Reddit, you can keep defaults or set exact feeds/subreddits:
+
+```bash
+HOOKAI_REDDIT_SUBREDDITS=LocalLLaMA,MachineLearning,singularity,OpenAI,ClaudeAI
+```
+
 ## Vercel deployment
 
 Production app:
-- [https://ai-workflow-radar.vercel.app](https://ai-workflow-radar.vercel.app)
+- [https://hook-ai.vercel.app](https://hook-ai.vercel.app)
 
 After setting env vars in Vercel project settings, redeploy:
 
@@ -113,7 +149,7 @@ Use GitHub Actions workflows:
 - `.github/workflows/digest-daily.yml` at `35 4 * * *`
 
 Required GitHub repository secrets:
-- `AWR_APP_URL` = `https://ai-workflow-radar.vercel.app`
+- `AWR_APP_URL` = `https://hook-ai.vercel.app`
 - `AWR_CRON_SECRET` = same value as `CRON_SECRET` in Vercel env vars
 
 ## Docker (deploy-ready baseline)
