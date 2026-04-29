@@ -6,44 +6,44 @@
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
   --font-hand: 'Caveat', cursive;
 
-  --bg-page: #f6f5f2;
-  --bg-panel: #ffffff;
-  --bg-soft: #efedea;
-  --ink: #0d0d0e;
-  --muted: #6b6a68;
-  --line: #e3e1dc;
-  --line-strong: #0d0d0e;
-  --accent: #8b5e3c;
-  --accent-soft: #c4a380;
-  --accent-ink: #ffffff;
+  --bg-page: #FAFAFA;
+  --bg-panel: #FFFFFF;
+  --bg-soft: #F4F4F5;
+  --ink: #171717;
+  --muted: #737373;
+  --line: #E5E5E5;
+  --line-strong: #171717;
+  --accent: #0055FF;
+  --accent-soft: #DBEAFE;
+  --accent-ink: #FFFFFF;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --bg-page: #0c0c0d;
-    --bg-panel: #161618;
-    --bg-soft: #1d1d20;
-    --ink: #f4f3ee;
-    --muted: #9a988f;
-    --line: #26262a;
-    --line-strong: #f4f3ee;
-    --accent: #c89878;
-    --accent-soft: #6b4d36;
-    --accent-ink: #0c0c0d;
+    --bg-page: #0A0A0A;
+    --bg-panel: #121212;
+    --bg-soft: #262626;
+    --ink: #EDEDED;
+    --muted: #A1A1AA;
+    --line: #262626;
+    --line-strong: #EDEDED;
+    --accent: #3B82F6;
+    --accent-soft: #1E3A8A;
+    --accent-ink: #FFFFFF;
   }
 }
 
 :root[data-theme="dark"] {
-  --bg-page: #0c0c0d;
-  --bg-panel: #161618;
-  --bg-soft: #1d1d20;
-  --ink: #f4f3ee;
-  --muted: #9a988f;
-  --line: #26262a;
-  --line-strong: #f4f3ee;
-  --accent: #c89878;
-  --accent-soft: #6b4d36;
-  --accent-ink: #0c0c0d;
+  --bg-page: #0A0A0A;
+  --bg-panel: #121212;
+  --bg-soft: #262626;
+  --ink: #EDEDED;
+  --muted: #A1A1AA;
+  --line: #262626;
+  --line-strong: #EDEDED;
+  --accent: #3B82F6;
+  --accent-soft: #1E3A8A;
+  --accent-ink: #FFFFFF;
 }
 
 @theme inline {
@@ -185,34 +185,6 @@ a {
 button {
   font-family: inherit;
   cursor: pointer;
-}
-
-@keyframes hook-ripple {
-  0% {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  35% {
-    opacity: 0.28;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.09);
-  }
-}
-
-.story-ripple::after {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: 9999px;
-  border: 1px solid var(--accent);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.story-ripple:hover::after {
-  animation: hook-ripple 1.25s ease-out infinite;
 }
 
 ::selection {

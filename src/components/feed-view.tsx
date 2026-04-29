@@ -6,10 +6,11 @@ import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { ThemeToggle, LanguageToggle } from "@/components/theme-toggle";
 import type { BenchmarkSummary, NewsItem } from "@/lib/feed-data";
 
-type ViewMode = "builder" | "ai-world" | "releases";
+type ViewMode = "builder" | "oss-infra" | "ai-world" | "releases";
 
 const tabs: Array<{ id: ViewMode; label: string }> = [
   { id: "builder", label: "Development News" },
+  { id: "oss-infra", label: "Open Source & Infra" },
   { id: "ai-world", label: "Allgemeine KI-News" },
   { id: "releases", label: "Release-Ankuendigungen" },
 ];
@@ -29,9 +30,15 @@ const RELEASE_STREAM_KEYWORDS = [
   "rolled out",
   "ships",
   "shipping",
+  "update",
+  "updates",
+  "patch",
+  "hotfix",
   "neuankuendigung",
   "ankuendigung",
   "veroeffentlicht",
+  "neues modell",
+  "modellupdate",
 ];
 
 const BUILDER_STREAM_KEYWORDS = [
@@ -48,8 +55,19 @@ const BUILDER_STREAM_KEYWORDS = [
   "sdk",
   "tooling",
   "devtool",
+  "devtools",
+  "claude code",
+  "openclaw",
+  "n8n",
+  "cursor",
+  "copilot",
+  "obsidian",
+  "agent",
+  "agents",
+  "agentic",
   "workflow",
   "automation",
+  "automatisierung",
   "pipeline",
   "ci",
   "cd",
@@ -66,15 +84,60 @@ const MODEL_RELEASE_KEYWORDS = [
   "model",
   "api",
 ];
+const INFRA_STREAM_KEYWORDS = [
+  "docker",
+  "dockerfile",
+  "docker compose",
+  "container",
+  "containers",
+  "kubernetes",
+  "k8s",
+  "podman",
+  "homeserver",
+  "home server",
+  "homelab",
+  "selfhosted",
+  "self-hosted",
+  "nas",
+  "proxmox",
+  "unraid",
+  "portainer",
+  "traefik",
+];
+
+const TRUSTED_DEV_CREATORS = new Set([
+  "julian ivanov",
+  "jack roberts",
+  "nate herk",
+  "ichbinfabian",
+  "christoph magnussen",
+  "ct3003",
+  "niklas hansen",
+  "the morpheus",
+  "jason lee",
+]);
+
+function hasKeyword(haystack: string, keyword: string): boolean {
+  if (keyword.length <= 5) {
+    const regex = new RegExp(`\\b${keyword}\\b`, "i");
+    return regex.test(haystack);
+  }
+  return haystack.includes(keyword);
+}
 
 function containsAny(haystack: string, keywords: string[]): boolean {
-  return keywords.some((keyword) => haystack.includes(keyword));
+  return keywords.some((keyword) => hasKeyword(haystack, keyword));
 }
 
 function classifyStream(item: NewsItem): ViewMode {
   const haystack = `${item.title} ${item.lead} ${item.sourceName}`.toLowerCase();
+  const sourceName = item.sourceName.toLowerCase().trim();
+  const trustedDevSource = TRUSTED_DEV_CREATORS.has(sourceName);
   const releaseSignal = containsAny(haystack, RELEASE_STREAM_KEYWORDS);
   const modelSignal = containsAny(haystack, MODEL_RELEASE_KEYWORDS);
+  const infraSignal =
+    containsAny(haystack, INFRA_STREAM_KEYWORDS) ||
+    item.category === "Open Source Infra";
   const builderSignal =
     containsAny(haystack, BUILDER_STREAM_KEYWORDS) ||
     item.category === "MCP" ||
@@ -83,6 +146,14 @@ function classifyStream(item: NewsItem): ViewMode {
 
   if (releaseSignal && (modelSignal || item.category === "Model Release")) {
     return "releases";
+  }
+
+  if (infraSignal && !releaseSignal) {
+    return "oss-infra";
+  }
+
+  if (trustedDevSource && !releaseSignal) {
+    return "builder";
   }
 
   if (builderSignal) {
@@ -114,6 +185,7 @@ function getFallbackThumbnail(category: NewsItem["category"]): string {
     case "Benchmark":
       return "/thumbnails/benchmark-shift.svg";
     case "Workflow":
+    case "Open Source Infra":
     case "Open Source":
     default:
       return "/thumbnails/open-eval.svg";
@@ -123,13 +195,33 @@ function getFallbackThumbnail(category: NewsItem["category"]): string {
 function getVisibleItems(
   mode: ViewMode,
   savedOnly: boolean,
+  searchQuery: string,
   items: NewsItem[],
 ): NewsItem[] {
+  const normalizedQuery = searchQuery.trim().toLowerCase();
   const sorted = [...items].sort((a, b) => b.score - a.score);
-  if (savedOnly) {
-    return sorted.filter((item) => item.saved);
+  const streamFiltered = sorted.filter((item) => {
+    if (savedOnly) return item.saved;
+    return classifyStream(item) === mode;
+  });
+
+  if (!normalizedQuery) {
+    return streamFiltered;
   }
-  return sorted.filter((item) => classifyStream(item) === mode);
+
+  return streamFiltered.filter((item) => {
+    const haystack = [
+      item.title,
+      item.lead,
+      item.sourceName,
+      item.category,
+      item.whyItMatters,
+      item.deepDive.join(" "),
+    ]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(normalizedQuery);
+  });
 }
 
 function formatDate(value: string) {
@@ -143,7 +235,7 @@ function formatDate(value: string) {
 }
 
 function shouldBypassImageOptimizer(src: string): boolean {
-  return src.startsWith("/api/source-image?");
+  return src.startsWith("/api/source-image?") || src.startsWith("/api/cover-image?");
 }
 
 type NewsImageProps = {
@@ -205,6 +297,7 @@ type FeedViewProps = {
 export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
   const [mode, setMode] = useState<ViewMode>("builder");
   const [savedOnly, setSavedOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [items, setItems] = useState<NewsItem[]>(initialItems);
   const [benchmarks, setBenchmarks] = useState<BenchmarkSummary[]>(initialBenchmarks);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -286,7 +379,7 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
     };
   }, []);
 
-  const visibleItems = getVisibleItems(mode, savedOnly, items);
+  const visibleItems = getVisibleItems(mode, savedOnly, searchQuery, items);
   const savedCount = useMemo(
     () => items.filter((item) => item.saved).length,
     [items],
@@ -440,15 +533,26 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
     >
       <header
         className="rounded-3xl border border-[var(--line)] bg-[var(--bg-panel)] px-5 py-6 sm:px-7"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 20% 20%, rgba(200,152,120,0.16), transparent 45%)",
-        }}
       >
         <div className="flex items-start justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">
-            Hook AI
-          </p>
+          <div className="flex items-center gap-2">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--accent)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="drop-shadow-sm"
+              aria-hidden="true"
+            >
+              <path d="M12 3v12a4 4 0 0 1-8 0" />
+              <circle cx="12" cy="3" r="2" fill="var(--bg-panel)" />
+            </svg>
+            <span className="font-sans font-bold tracking-tight text-[var(--ink)]">Hook AI</span>
+          </div>
           <div className="flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--bg-soft)] px-2 py-1">
             <button
               type="button"
@@ -482,11 +586,14 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
             <ThemeToggle />
           </div>
         </div>
-        <h1 className="mt-3 max-w-3xl display text-4xl leading-[1.05] text-[var(--ink)] sm:text-5xl">
-          Hook AI. Wir fischen die Signale aus dem KI-Rauschen.
+        <h1 className="mt-3 max-w-3xl text-4xl leading-[1.05] text-[var(--ink)] sm:text-5xl">
+          <span className="display">Hook AI.</span>{" "}
+          <span className="font-sans font-semibold tracking-tight">
+            Wir fischen die Signale aus dem KI-Rauschen.
+          </span>
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--muted)]">
-          Dein Daily Feed, reduziert auf das, was wirklich anbeißt. Builder-News, AI-Welt und Releases.
+          Dein Daily Feed, reduziert auf das, was wirklich anbeißt. Builder-News, Open Source & Infra, AI-Welt und Releases.
         </p>
         {isRefreshing ? (
           <p className="mt-3 text-xs text-[var(--muted)]">Aktualisiere Feed ...</p>
@@ -502,7 +609,7 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
         </div>
       </div>
 
-      <section className="mt-5">
+      <section className="mt-5 lg:hidden">
         <div className="flex items-baseline justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
             Story News
@@ -517,9 +624,9 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
               key={item.id}
               type="button"
               onClick={() => openStory(index)}
-              className="group w-28 shrink-0 text-left"
+              className="w-28 shrink-0 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
             >
-              <div className="story-ripple relative h-28 w-28 overflow-hidden rounded-full border-2 border-[var(--accent)]/60 transition-all duration-300 group-hover:scale-[1.02] group-hover:ring-2 group-hover:ring-[var(--accent)]/30">
+              <div className="relative h-28 w-28 overflow-hidden rounded-full border border-[var(--line)] bg-[var(--bg-panel)]">
                 <NewsImage
                   key={`${item.id}-${item.imagePath}`}
                   src={item.imagePath}
@@ -563,13 +670,53 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
         })}
       </nav>
 
+      <section className="mt-3">
+        <label htmlFor="article-search" className="sr-only">
+          Artikel durchsuchen
+        </label>
+        <div className="flex items-center gap-2 rounded-2xl border border-[var(--line)] bg-[var(--bg-panel)] px-3 py-2">
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            aria-hidden="true"
+            className="text-[var(--muted)]"
+          >
+            <path
+              d="M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14Zm0 0 9 9"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <input
+            id="article-search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Suche in Titel, Quelle, Kategorie und Deep Dive ..."
+            className="w-full bg-transparent text-sm text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
+          />
+          {searchQuery.trim().length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="rounded-full border border-[var(--line)] px-2 py-0.5 text-xs text-[var(--muted)] hover:bg-[var(--bg-soft)]"
+            >
+              Reset
+            </button>
+          ) : null}
+        </div>
+      </section>
+
       <main className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
         <section className="relative space-y-4 pl-6 before:absolute before:bottom-0 before:left-1.5 before:top-0 before:w-px before:bg-[var(--line)] before:content-['']">
           {visibleItems.map((item, index) => (
-            <div key={item.id} className="relative">
+            <div key={item.id} className="group relative">
               <span
                 aria-hidden="true"
-                className="absolute left-0 top-8 h-2 w-2 rounded-full bg-[var(--accent)] shadow-[0_0_0_3px_var(--bg-page)]"
+                className="absolute left-[0.125rem] top-8 h-1.5 w-1.5 rounded-full bg-[var(--muted)] transition-colors duration-200 group-hover:bg-[var(--accent)]"
               />
               <article className="overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--bg-panel)]">
                 <Link href={`/article/${item.id}`} className="block">
