@@ -91,6 +91,8 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
   const [pullDistance, setPullDistance] = useState(0);
   const pullStartYRef = useRef<number | null>(null);
   const pullEnabledRef = useRef(false);
+  const storyCloseRef = useRef<HTMLButtonElement | null>(null);
+  const storyOpenerRef = useRef<HTMLElement | null>(null);
 
   async function refreshFeed(options?: {
     signal?: AbortSignal;
@@ -146,18 +148,21 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
   }
 
   useEffect(() => {
+    const controller = new AbortController();
+
     function handleVisibilityChange() {
       if (document.visibilityState === "visible") {
-        refreshFeed({ showRefreshingLabel: false });
+        refreshFeed({ showRefreshingLabel: false, signal: controller.signal });
       }
     }
 
     const intervalId = window.setInterval(() => {
-      refreshFeed({ showRefreshingLabel: false });
+      refreshFeed({ showRefreshingLabel: false, signal: controller.signal });
     }, 120000);
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
+      controller.abort();
       window.clearInterval(intervalId);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
@@ -174,6 +179,48 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
   );
 
   const currentStory = storyItems[storyIndex];
+
+  const storyItemsLength = storyItems.length;
+  useEffect(() => {
+    if (!storyOpen) return;
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    storyOpenerRef.current = previouslyFocused;
+
+    const focusTimer = window.setTimeout(() => {
+      storyCloseRef.current?.focus();
+    }, 0);
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setStoryOpen(false);
+      } else if (event.key === "ArrowLeft") {
+        setStoryIndex((current) => {
+          if (storyItemsLength === 0) return 0;
+          if (current <= 0) return storyItemsLength - 1;
+          return current - 1;
+        });
+      } else if (event.key === "ArrowRight") {
+        setStoryIndex((current) => {
+          if (storyItemsLength === 0) return 0;
+          if (current >= storyItemsLength - 1) return 0;
+          return current + 1;
+        });
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      storyOpenerRef.current?.focus();
+    };
+  }, [storyOpen, storyItemsLength]);
 
   function openStory(index: number) {
     setStoryIndex(index);
@@ -494,6 +541,9 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
 
       {storyOpen && currentStory ? (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="story-modal-title"
           className="fixed inset-0 z-50 bg-black text-white lg:hidden"
           onTouchStart={handleStoryTouchStart}
           onTouchEnd={handleStoryTouchEnd}
@@ -522,8 +572,10 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
             </div>
 
             <button
+              ref={storyCloseRef}
               type="button"
               onClick={() => setStoryOpen(false)}
+              aria-label="Story schliessen"
               className="absolute right-3 top-6 z-30 rounded-full border border-white/60 bg-black/40 px-3 py-1 text-xs font-medium"
             >
               Schliessen
@@ -546,7 +598,10 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
               <p className="text-xs uppercase tracking-[0.08em] text-white/75">
                 {currentStory.category} · Score {currentStory.score}
               </p>
-              <h3 className="text-3xl font-semibold leading-tight">
+              <h3
+                id="story-modal-title"
+                className="text-3xl font-semibold leading-tight"
+              >
                 {currentStory.title}
               </h3>
               <p className="text-sm text-white/90">{currentStory.lead}</p>
