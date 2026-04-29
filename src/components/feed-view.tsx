@@ -331,7 +331,7 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
               onClick={() => setSavedOnly((current) => !current)}
               aria-pressed={savedOnly}
               aria-label={savedOnly ? "Saved-Filter aus" : "Saved-Filter an"}
-              className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
+              className={`flex h-11 w-11 items-center justify-center rounded-full border transition ${
                 savedOnly
                   ? "border-[var(--accent)] bg-[var(--accent)] text-white"
                   : "border-[var(--line)] bg-[var(--bg-soft)] text-[var(--ink)] hover:bg-[var(--bg-panel)]"

@@ -5,6 +5,7 @@ import {
   pinnedDispatcher,
   resolveAndValidateHost,
 } from "@/lib/network-safety";
+import { isRateLimited } from "@/lib/rate-limit";
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_REDIRECTS = 3;
@@ -132,6 +133,10 @@ async function fetchWithRedirectValidation(
 }
 
 export async function GET(request: NextRequest) {
+  if (isRateLimited(request, { bucket: "source-image", max: 120 })) {
+    return new NextResponse("Too Many Requests", { status: 429 });
+  }
+
   const rawUrl = request.nextUrl.searchParams.get("url");
   if (!rawUrl) {
     return new NextResponse("Missing url parameter", { status: 400 });

@@ -1,44 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { NewsCategory } from "@/lib/feed-data";
 import { getRepoAssessment } from "@/lib/repo-assessment";
+import { isRateLimited } from "@/lib/rate-limit";
 import { REPO_FULLNAME_PATTERN, NPM_PACKAGE_PATTERN } from "@/lib/validators";
-
-const RATE_LIMIT_WINDOW_MS = 60 * 1000;
-const RATE_LIMIT_MAX = 30;
-
-declare global {
-  var __repoAssessmentRateMap: Map<string, { count: number; resetAt: number }> | undefined;
-}
-
-function getRateMap() {
-  if (!globalThis.__repoAssessmentRateMap) {
-    globalThis.__repoAssessmentRateMap = new Map();
-  }
-  return globalThis.__repoAssessmentRateMap;
-}
-
-function rateLimitKey(request: NextRequest): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0]?.trim() || "unknown";
-  }
-  return request.headers.get("x-real-ip") || "unknown";
-}
-
-function isRateLimited(request: NextRequest): boolean {
-  const map = getRateMap();
-  const key = rateLimitKey(request);
-  const now = Date.now();
-  const entry = map.get(key);
-
-  if (!entry || entry.resetAt < now) {
-    map.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return false;
-  }
-
-  entry.count += 1;
-  return entry.count > RATE_LIMIT_MAX;
-}
 
 function isNewsCategory(value: string): value is NewsCategory {
   return (
@@ -52,7 +16,7 @@ function isNewsCategory(value: string): value is NewsCategory {
 }
 
 export async function GET(request: NextRequest) {
-  if (isRateLimited(request)) {
+  if (isRateLimited(request, { bucket: "repo-assessment", max: 30 })) {
     return NextResponse.json({ error: "Too Many Requests" }, { status: 429 });
   }
 

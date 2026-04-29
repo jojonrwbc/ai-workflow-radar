@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { createHash } from "node:crypto";
 import type { NewsCategory, NewsItem } from "@/lib/feed-data";
+import { isPublicInternetHostname } from "@/lib/network-safety";
 
 const LANGUAGE = process.env.NEWS_LANGUAGE || "de";
 
@@ -185,6 +186,23 @@ type RawScrapeItem = {
 
 async function fetchSource(source: ScrapeSource): Promise<RawScrapeItem[]> {
   try {
+    let parsed: URL;
+    try {
+      parsed = new URL(source.url);
+    } catch {
+      console.warn(`[scraper] ${source.name} invalid URL: ${source.url}`);
+      return [];
+    }
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      console.warn(`[scraper] ${source.name} blocked non-http(s) URL`);
+      return [];
+    }
+    const allowed = await isPublicInternetHostname(parsed.hostname);
+    if (!allowed) {
+      console.warn(`[scraper] ${source.name} blocked non-public host: ${parsed.hostname}`);
+      return [];
+    }
+
     const res = await fetch(source.url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",

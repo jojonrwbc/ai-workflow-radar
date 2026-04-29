@@ -37,7 +37,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="fixed top-4 right-4 z-50 flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--bg-panel)] px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+      className="fixed top-4 right-4 z-50 flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--bg-panel)] min-h-11 min-w-11 px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
       aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
     >
       {theme === "light" ? "Dark" : "Light"}
@@ -58,7 +58,7 @@ export function LanguageToggle() {
     <button
       type="button"
       onClick={toggleLanguage}
-      className="fixed top-4 right-20 z-50 flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--bg-panel)] px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+      className="fixed top-4 right-20 z-50 flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--bg-panel)] min-h-11 min-w-11 px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
       aria-label={`Switch to ${language === "de" ? "English" : "Deutsch"}`}
     >
       {language === "de" ? "EN" : "DE"}

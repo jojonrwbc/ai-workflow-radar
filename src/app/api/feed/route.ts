@@ -165,12 +165,16 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
   }
 };
 
+function escapeRegExp(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function translate(text: string, lang: string): string {
   if (lang === "en" || !text) return text || "";
   let result = text;
   const dict = TRANSLATIONS[lang] || {};
   for (const [key, value] of Object.entries(dict)) {
-    const regex = new RegExp(key, "gi");
+    const regex = new RegExp(escapeRegExp(key), "gi");
     result = result.replace(regex, value);
   }
   return result;
