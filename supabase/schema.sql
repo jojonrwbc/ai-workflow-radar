@@ -95,6 +95,11 @@ as $$
   order by label, captured_at desc;
 $$;
 
+alter table news_items            enable row level security;
+alter table ingest_runs           enable row level security;
+alter table news_ingest_events    enable row level security;
+alter table benchmark_snapshots   enable row level security;
+
 create or replace function purge_stale_ingest_data()
 returns void
 language plpgsql

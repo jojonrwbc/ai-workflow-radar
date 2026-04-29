@@ -52,10 +52,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     console.error("[scrape] CRASH:", err);
-    const msg = err ? JSON.stringify(err) : "Unknown error";
-    return NextResponse.json({ 
-      status: "error", 
-      error: msg,
+    return NextResponse.json({
+      status: "error",
+      error: "Scrape failed",
     }, { status: 500 });
   }
 }
