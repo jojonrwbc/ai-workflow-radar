@@ -51,6 +51,12 @@ create table if not exists news_ingest_events (
 create index if not exists idx_news_ingest_events_run_id
   on news_ingest_events (run_id);
 
+create index if not exists idx_news_ingest_events_observed_at
+  on news_ingest_events (observed_at);
+
+create index if not exists idx_ingest_runs_started_at
+  on ingest_runs (started_at);
+
 create table if not exists benchmark_snapshots (
   id uuid primary key default gen_random_uuid(),
   run_id uuid not null references ingest_runs(id) on delete cascade,
