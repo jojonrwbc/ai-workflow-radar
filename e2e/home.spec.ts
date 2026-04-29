@@ -1,13 +1,24 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("home feed", () => {
-  test("loads heading + tab nav", async ({ page }) => {
+  test("loads heading + filter chips + saved bookmark", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByText(/Daily AI feed/i)).toBeVisible();
     await expect(page.getByRole("button", { name: /Builder News/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /AI World/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /Releases/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Saved/i })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Saved-Filter (an|aus)/i }),
+    ).toBeVisible();
+  });
+
+  test("saved bookmark toggles aria-pressed", async ({ page }) => {
+    await page.goto("/");
+    const bookmark = page.locator('button[aria-pressed]').first();
+    await expect(bookmark).toBeVisible();
+    await expect(bookmark).toHaveAttribute("aria-pressed", "false");
+    await bookmark.click();
+    await expect(bookmark).toHaveAttribute("aria-pressed", "true");
   });
 
   test("renders at least one article card", async ({ page }) => {

@@ -6,13 +6,12 @@ import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { ThemeToggle, LanguageToggle } from "@/components/theme-toggle";
 import type { BenchmarkSummary, NewsItem } from "@/lib/feed-data";
 
-type ViewMode = "builder" | "ai-world" | "releases" | "saved";
+type ViewMode = "builder" | "ai-world" | "releases";
 
 const tabs: Array<{ id: ViewMode; label: string }> = [
   { id: "builder", label: "Builder News" },
   { id: "ai-world", label: "AI World" },
   { id: "releases", label: "Releases" },
-  { id: "saved", label: "Saved" },
 ];
 
 function isBuilderItem(item: NewsItem): boolean {
@@ -32,9 +31,13 @@ function isReleaseItem(item: NewsItem): boolean {
   return /(release|update|launch|notes|version|changelog|neuankuendigung)/i.test(haystack);
 }
 
-function getVisibleItems(mode: ViewMode, items: NewsItem[]): NewsItem[] {
+function getVisibleItems(
+  mode: ViewMode,
+  savedOnly: boolean,
+  items: NewsItem[],
+): NewsItem[] {
   const sorted = [...items].sort((a, b) => b.score - a.score);
-  if (mode === "saved") {
+  if (savedOnly) {
     return sorted.filter((item) => item.saved);
   }
   if (mode === "builder") {
@@ -78,6 +81,7 @@ type FeedViewProps = {
 
 export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
   const [mode, setMode] = useState<ViewMode>("builder");
+  const [savedOnly, setSavedOnly] = useState(false);
   const [items, setItems] = useState<NewsItem[]>(initialItems);
   const [benchmarks, setBenchmarks] = useState<BenchmarkSummary[]>(initialBenchmarks);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -159,7 +163,11 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
     };
   }, []);
 
-  const visibleItems = getVisibleItems(mode, items);
+  const visibleItems = getVisibleItems(mode, savedOnly, items);
+  const savedCount = useMemo(
+    () => items.filter((item) => item.saved).length,
+    [items],
+  );
   const storyItems = useMemo(
     () => [...visibleItems].sort((a, b) => b.score - a.score).slice(0, 12),
     [visibleItems],
@@ -260,7 +268,7 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
 
   return (
     <div
-      className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 pb-28 pt-7 sm:px-8 lg:px-10 lg:pb-10"
+      className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 pb-10 pt-7 sm:px-8 lg:px-10"
       onTouchStart={handleFeedTouchStart}
       onTouchMove={handleFeedTouchMove}
       onTouchEnd={handleFeedTouchEnd}
@@ -270,8 +278,38 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">
             AI Workflow Radar
           </p>
-          <ThemeToggle />
-          <LanguageToggle />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSavedOnly((current) => !current)}
+              aria-pressed={savedOnly}
+              aria-label={savedOnly ? "Saved-Filter aus" : "Saved-Filter an"}
+              className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                savedOnly
+                  ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                  : "border-[var(--line)] bg-[var(--bg-soft)] text-[var(--ink)] hover:bg-[var(--bg-panel)]"
+              }`}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill={savedOnly ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+              </svg>
+              {savedOnly && savedCount > 0 ? (
+                <span className="sr-only">{savedCount} saved</span>
+              ) : null}
+            </button>
+            <ThemeToggle />
+            <LanguageToggle />
+          </div>
         </div>
         <h1 className="mt-3 max-w-3xl display text-4xl leading-[1.05] text-[var(--ink)] sm:text-5xl">
           Daily AI feed, reduziert auf das, was wirklich nutzbar ist.
@@ -293,57 +331,66 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
         </div>
       </div>
 
-      <div className="mt-4 hidden grid-cols-4 gap-2 lg:grid">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setMode(tab.id)}
-            className={`rounded-full border px-3 py-2 text-sm font-medium transition ${
-              mode === tab.id
-                ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-                : "border-[var(--line)] bg-[var(--bg-panel)] text-[var(--ink)] hover:bg-[var(--bg-soft)]"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      <section className="mt-4 lg:hidden">
-        <div className="flex items-center justify-between">
+      <section className="mt-5">
+        <div className="flex items-baseline justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
             Story News
           </h2>
           <span className="text-xs text-[var(--muted)]">
-            {storyItems.length} Highlights
+            {storyItems.length} Highlights · zum Tippen
           </span>
         </div>
-        <div className="mt-2 flex gap-3 overflow-x-auto pb-1">
+        <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
           {storyItems.map((item, index) => (
             <button
               key={item.id}
               type="button"
               onClick={() => openStory(index)}
-              className="w-24 shrink-0 text-left"
+              className="w-28 shrink-0 text-left"
             >
-              <div className="relative h-24 w-24 overflow-hidden rounded-full border border-[var(--line)]">
+              <div className="relative h-28 w-28 overflow-hidden rounded-full border-2 border-[var(--accent)]/60">
                 <Image
                   src={item.imagePath}
                   alt={item.imageLabel}
                   fill
                   className="object-cover"
-                  sizes="96px"
+                  sizes="112px"
                   unoptimized={shouldBypassImageOptimizer(item.imagePath)}
                 />
               </div>
-              <p className="mt-1 line-clamp-2 text-[11px] font-medium text-[var(--ink)]">
+              <p className="mt-2 line-clamp-2 text-[11px] font-medium text-[var(--ink)]">
                 {item.title}
               </p>
             </button>
           ))}
         </div>
       </section>
+
+      <nav
+        aria-label="Kategoriefilter"
+        className="mt-4 flex gap-2 overflow-x-auto pb-1"
+      >
+        {tabs.map((tab) => {
+          const isActive = !savedOnly && mode === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => {
+                setSavedOnly(false);
+                setMode(tab.id);
+              }}
+              className={`shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+                isActive
+                  ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                  : "border-[var(--line)] bg-[var(--bg-panel)] text-[var(--ink)] hover:bg-[var(--bg-soft)]"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </nav>
 
       <main className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
         <section className="space-y-4">
@@ -444,25 +491,6 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
           </section>
         </aside>
       </main>
-
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-[var(--line)] bg-[var(--bg-panel)]/95 px-3 py-2 backdrop-blur lg:hidden">
-        <div className="mx-auto grid max-w-3xl grid-cols-4 gap-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setMode(tab.id)}
-              className={`rounded-full border px-2 py-2 text-xs font-medium ${
-                mode === tab.id
-                  ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-                  : "border-[var(--line)] bg-[var(--bg-soft)] text-[var(--ink)]"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </nav>
 
       {storyOpen && currentStory ? (
         <div

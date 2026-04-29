@@ -1,8 +1,21 @@
 # RFC 0001 — Tabs vs Story-Feed primary navigation
 
-Status: **Open** (decision pending — Johannes)
+Status: **Accepted — Option A** (Johannes, 2026-04-29)
 Author: Mira Vogt review consolidation
 Date: 2026-04-28
+
+## Implementation
+
+- Story strip promoted above filter row, larger circles (112px),
+  accent border to signal primary CTA.
+- Tabs collapsed into horizontal chip row (`Builder News`, `AI World`,
+  `Releases`); `Saved` tab dropped from chip set.
+- `Saved` exposed as a bookmark toggle in the header, controls a
+  separate `savedOnly` boolean that overrides the chip filter when
+  active. `aria-pressed` reflects state for assistive tech.
+- Mobile bottom nav (`fixed inset-x-0 bottom-0`) removed; chip row at
+  top is now the single mode-switch surface across viewports.
+- E2E coverage and Darwin visual baselines updated.
 
 ## Context
 
