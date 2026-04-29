@@ -95,10 +95,10 @@ The app uses the service role key only inside server runtimes
 
 ## Audit checklist
 
-- [ ] Project region is EU
-- [ ] `schema.sql` applied without errors
-- [ ] `select * from latest_benchmarks()` works
-- [ ] `pg_cron` extension enabled
-- [ ] `awr-purge-stale` job visible in `cron.job`
-- [ ] Manual `purge_stale_ingest_data()` succeeded once
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` and `CRON_SECRET` set in deployment env
+- [x] Project region is EU
+- [x] `schema.sql` applied without errors
+- [x] `select * from latest_benchmarks()` works
+- [x] `pg_cron` extension enabled
+- [x] `awr-purge-stale` job visible in `cron.job`
+- [x] Manual `purge_stale_ingest_data()` succeeded once
+- [x] `SUPABASE_SERVICE_ROLE_KEY` and `CRON_SECRET` set in deployment env
