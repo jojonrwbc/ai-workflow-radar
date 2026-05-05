@@ -17,13 +17,14 @@ Mobile-first News App for daily AI updates with focus on MCP, CLI, OSS tooling a
   - `benchmark_snapshots` (time-series benchmark values, queried via `latest_benchmarks()` RPC)
   - `ingest_runs` (pipeline run status and errors)
 - Scheduled ingestion endpoints:
-  - `GET /api/cron/ingest` daily (configured for 04:00 UTC)
+  - `GET /api/cron/scrape` hourly source scraping
+  - `GET /api/cron/ingest` 2-hour ingestion run
   - `GET /api/cron/digest` daily digest endpoint
 - Ingest status endpoint:
   - `GET /api/status`
 - Scheduler options:
-  - Vercel daily cron (`vercel.json`)
-  - GitHub Actions for 2-hour cadence (`.github/workflows/*`)
+  - GitHub Actions schedules (`.github/workflows/*`)
+  - Vercel Cron is currently disabled in `vercel.json`
 - Hardened `/api/source-image` proxy: SSRF BlockList, manual redirect validation (max 3 hops), 6s timeout, 8MB body cap
 - `/api/repo-assessment` with strict `repo` regex validation, npm package validation, in-memory IP rate limit (30/min)
 
@@ -113,10 +114,11 @@ After setting env vars in Vercel project settings, redeploy:
 vercel deploy --prod
 ```
 
-Vercel cron schedule is defined in `vercel.json`:
-- `0 4 * * *` → `/api/cron/ingest`
+Vercel Cron is intentionally disabled in `vercel.json`:
+- `"crons": []`
 
-Note: Vercel cron uses UTC. `0 4 * * *` equals 06:00 in Berlin during summer time.
+Scheduled production calls are handled by GitHub Actions so the cadence can be
+more frequent than Vercel Hobby cron limits allow.
 
 ## Observability
 
@@ -142,9 +144,10 @@ A GitHub Actions workflow runs on pushes and pull requests to `main`:
 - `.github/workflows/ci.yml`
 - Executes `npm run lint`, `npm test`, and `npm run build`
 
-## 2-hour scheduler (Hobby-friendly)
+## GitHub Actions Scheduler
 
 Use GitHub Actions workflows:
+- `.github/workflows/scrape-hourly.yml` at `0 * * * *`
 - `.github/workflows/ingest-every-2h.yml` at `10 */2 * * *`
 - `.github/workflows/digest-daily.yml` at `35 4 * * *`
 
@@ -168,6 +171,7 @@ App runs on [http://localhost:3000](http://localhost:3000)
 - `GET /api/feed/:id`
 - `GET /api/benchmarks`
 - `GET /api/repo-assessment?repo=<owner/name>&category=<...>`
+- `GET /api/cron/scrape`
 - `GET /api/cron/ingest`
 - `GET /api/cron/digest`
 - `GET /api/status`
@@ -181,4 +185,4 @@ App runs on [http://localhost:3000](http://localhost:3000)
 - `src/app/api/*` app APIs and cron endpoints
 - `.github/workflows/*` external schedulers for Hobby plan
 - `supabase/schema.sql` database schema
-- `vercel.json` cron configuration
+- `vercel.json` Vercel project configuration; cron disabled while GitHub Actions handles scheduling

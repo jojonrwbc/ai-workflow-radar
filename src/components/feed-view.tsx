@@ -622,6 +622,9 @@ export function FeedView({ initialItems, initialBenchmarks }: FeedViewProps) {
                   alt={item.imageLabel}
                   className="object-cover"
                   sizes="112px"
+                  priority={index === 0}
+                  fetchPriority={index === 0 ? "high" : "auto"}
+                  loading={index === 0 ? "eager" : "lazy"}
                 />
               </div>
               <p className="mt-2 line-clamp-2 text-[11px] font-medium text-[var(--ink)]">

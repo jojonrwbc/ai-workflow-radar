@@ -3,10 +3,18 @@ import { expect, test } from "@playwright/test";
 test.describe("home feed", () => {
   test("loads heading + filter chips + saved bookmark", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText(/Daily AI feed/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /Builder News/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /AI World/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Releases/i })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Hook AI\. Signale aus dem Rauschen\./i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Development News/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Allgemeine KI-News/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Release-Ankuendigungen/i }),
+    ).toBeVisible();
     await expect(
       page.getByRole("button", { name: /Saved-Filter (an|aus)/i }),
     ).toBeVisible();
