@@ -9,6 +9,7 @@ function isNewsCategory(value: string): value is NewsCategory {
     value === "MCP" ||
     value === "CLI" ||
     value === "Open Source" ||
+    value === "Open Source Infra" ||
     value === "Model Release" ||
     value === "Benchmark" ||
     value === "Workflow"

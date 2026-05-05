@@ -21,6 +21,8 @@ function parseMetaImage(html: string): string | null {
   const patterns = [
     /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
     /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
+    /<meta[^>]+property=["']og:image:secure_url["'][^>]+content=["']([^"']+)["']/i,
+    /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image:secure_url["']/i,
     /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
     /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i,
   ];
@@ -33,6 +35,36 @@ function parseMetaImage(html: string): string | null {
   }
 
   return null;
+}
+
+function extractYouTubeThumbnail(sourceUrl: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(sourceUrl);
+  } catch {
+    return null;
+  }
+
+  const host = parsed.hostname.toLowerCase();
+  const isYouTube = host.endsWith("youtube.com") || host === "youtu.be";
+  if (!isYouTube) return null;
+
+  let videoId = "";
+  if (host === "youtu.be") {
+    videoId = parsed.pathname.replace("/", "").trim();
+  } else if (parsed.pathname.startsWith("/watch")) {
+    videoId = parsed.searchParams.get("v")?.trim() ?? "";
+  } else if (parsed.pathname.startsWith("/shorts/")) {
+    videoId = parsed.pathname.replace("/shorts/", "").split("/")[0] ?? "";
+  } else if (parsed.pathname.startsWith("/live/")) {
+    videoId = parsed.pathname.replace("/live/", "").split("/")[0] ?? "";
+  }
+
+  if (!/^[a-zA-Z0-9_-]{8,20}$/.test(videoId)) {
+    return null;
+  }
+
+  return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 }
 
 function toAbsoluteUrl(candidate: string, baseUrl: string): string | null {
@@ -55,6 +87,15 @@ export async function resolveSourceImage(sourceUrl: string): Promise<string | nu
   }
 
   try {
+    const youtubeThumb = extractYouTubeThumbnail(sourceUrl);
+    if (youtubeThumb) {
+      cache.set(sourceUrl, {
+        expiresAt: Date.now() + TTL_MS,
+        imageUrl: youtubeThumb,
+      });
+      return youtubeThumb;
+    }
+
     const source = new URL(sourceUrl);
     const isSourceHostAllowed = await isPublicInternetHostname(source.hostname);
     if (!isSourceHostAllowed) {
@@ -66,7 +107,7 @@ export async function resolveSourceImage(sourceUrl: string): Promise<string | nu
     const response = await fetch(sourceUrl, {
       signal: controller.signal,
       headers: {
-        "User-Agent": "ai-workflow-radar/1.0",
+        "User-Agent": "hook-ai/1.0",
         Accept: "text/html,application/xhtml+xml",
       },
       cache: "no-store",

@@ -125,10 +125,12 @@ function mapNewsItemToDbRow(item: NewsItem): DbNewsItemRow {
 
 function fallbackSortedNews(limit: number): NewsItem[] {
   return [...dailyNews]
-    .sort(
-      (a, b) =>
-        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-    )
+    .sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+    })
     .slice(0, limit);
 }
 
@@ -142,6 +144,7 @@ export async function listNewsItems(limit = 50): Promise<NewsItem[]> {
     const { data, error } = await client
       .from("news_items")
       .select("*")
+      .order("score", { ascending: false })
       .order("published_at", { ascending: false })
       .limit(limit);
 

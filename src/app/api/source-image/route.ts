@@ -96,7 +96,7 @@ async function fetchWithRedirectValidation(
     try {
       const undiciResponse = await undiciFetch(current.toString(), {
         headers: {
-          "User-Agent": "ai-workflow-radar/1.0",
+          "User-Agent": "hook-ai/1.0",
         },
         redirect: "manual",
         signal,
