@@ -70,6 +70,7 @@ const CATEGORY_IMAGES: Record<NewsCategory, string> = {
   MCP: "/thumbnails/mcp-registry.svg",
   CLI: "/thumbnails/cli-release.svg",
   "Open Source": "/thumbnails/open-eval.svg",
+  "Open Source Infra": "/thumbnails/open-eval.svg",
   "Model Release": "/thumbnails/model-notes.svg",
   Benchmark: "/thumbnails/benchmark-shift.svg",
   Workflow: "/thumbnails/open-eval.svg",

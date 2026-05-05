@@ -2,6 +2,7 @@ export type NewsCategory =
   | "MCP"
   | "CLI"
   | "Open Source"
+  | "Open Source Infra"
   | "Model Release"
   | "Benchmark"
   | "Workflow";

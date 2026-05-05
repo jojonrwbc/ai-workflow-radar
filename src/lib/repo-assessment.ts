@@ -38,6 +38,7 @@ const categoryWeight: Record<NewsCategory, number> = {
   MCP: 1.3,
   CLI: 1.15,
   "Open Source": 1.1,
+  "Open Source Infra": 1.2,
   Workflow: 1.0,
   Benchmark: 0.7,
   "Model Release": 0.5,
