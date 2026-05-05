@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import { createHash } from "node:crypto";
 import type { NewsCategory, NewsItem } from "@/lib/feed-data";
 import { isPublicInternetHostname } from "@/lib/network-safety";
+import { categorize as categorizeFromSources } from "@/lib/sources";
 
 const LANGUAGE = process.env.NEWS_LANGUAGE || "de";
 
@@ -138,26 +139,17 @@ function isRelevant(title: string, lead: string): boolean {
 }
 
 function categorize(title: string, lead: string = ""): NewsCategory {
-  const hay = (title + " " + lead).toLowerCase();
-  if (/mcp/.test(hay) || /model context protocol/.test(hay)) return "MCP";
-  if (/cli/.test(hay) || /command line/.test(hay) || /terminal/.test(hay) || /shell/.test(hay) || /bash/.test(hay)) return "CLI";
-  if (/gpt-/.test(hay) || /claude \d+/.test(hay) || /gemini \d+/.test(hay) || /llama \d+/.test(hay) || /model release/.test(hay) || /new model/.test(hay) || /opus/.test(hay) || /sonnet/.test(hay) || /haiku/.test(hay) || /anthropic/.test(hay) || /openai/.test(hay)) return "Model Release";
-  if (/benchmark/.test(hay) || /eval/.test(hay) || /swe-bench/.test(hay) || /arena/.test(hay) || /leaderboard/.test(hay) || /ranking/.test(hay) || /score/.test(hay)) return "Benchmark";
-  if (/agent/.test(hay) || /automation/.test(hay) || /workflow/.test(hay) || /autonomous/.test(hay) || /robot/.test(hay)) return "Workflow";
-  if (/bug/.test(hay) || /hack/.test(hay) || /breach/.test(hay) || /leak/.test(hay) || /attack/.test(hay) || /malware/.test(hay) || /security/.test(hay) || /privacy/.test(hay) || /data protection/.test(hay)) return "Benchmark";
-  if (/deepfake/.test(hay)) return "Benchmark";
-  return "Open Source";
+  return categorizeFromSources(title, lead);
 }
 
-const CATEGORY_IMAGES: Record<NewsCategory, string> = {
-  MCP: "/thumbnails/mcp-registry.svg",
-  CLI: "/thumbnails/cli-release.svg",
-  "Open Source": "/thumbnails/open-eval.svg",
-  "Open Source Infra": "/thumbnails/open-eval.svg",
-  "Model Release": "/thumbnails/model-notes.svg",
-  Benchmark: "/thumbnails/benchmark-shift.svg",
-  Workflow: "/thumbnails/open-eval.svg",
-};
+function coverImagePath(title: string, sourceName: string, category: NewsCategory): string {
+  const params = new URLSearchParams({
+    title: title.slice(0, 120),
+    source: sourceName.slice(0, 80),
+    category,
+  });
+  return `/api/cover-image?${params.toString()}`;
+}
 
 function calcScore(sourceName: string, title: string): number {
   const priorityWeight: Record<string, number> = {
@@ -279,11 +271,11 @@ export async function scrapeAllSources(): Promise<NewsItem[]> {
       lead: translate(item.lead || item.title),
       whyItMatters: item.sourceName === "Hacker News" 
         ? translate("Quelle Hacker News")
-        : translate("Relevante News fuer deinen AI Workflow") + " " + category,
+        : translate("Relevante News fuer Hook AI") + " " + category,
       sourceName: item.sourceName,
       sourceUrl: item.link,
       imageLabel: `${category} Quelle`,
-      imagePath: CATEGORY_IMAGES[category],
+      imagePath: coverImagePath(item.title, item.sourceName, category),
       publishedAt: new Date().toISOString(),
       category,
       score,
@@ -292,7 +284,14 @@ export async function scrapeAllSources(): Promise<NewsItem[]> {
       signal: 75,
       obscurity: 50,
       saved: false,
-      deepDive: [item.lead || item.title],
+      deepDive: [
+        `${item.lead || item.title} Die Story ist relevant, weil sie nicht nur News liefert, sondern konkrete Auswirkungen auf Umsetzung, Priorisierung und Betriebsstabilitaet haben kann.`,
+        `Fuer wen geeignet: Teams in Produkt, Engineering und AI-Ops, die aktive Entscheidungen zu Tooling, Architektur oder Modellstrategie treffen muessen.`,
+        "Typischer Usecase: Aus der Nachricht wird ein kleiner Validierungs-Case in eurer Umgebung abgeleitet (z. B. Prompt-/Tool-Test, CI-Schritt, Performance-Vergleich oder Security-Check).",
+        "Voraussetzungen: klare Zielmetrik, eine reproduzierbare Testumgebung und ein benannter Owner, der die Ergebnisse in eine Team-Entscheidung ueberfuehrt.",
+        "Kostenbild: meist geringer Einstieg fuer einen PoC, aber je nach Integrationsgrad entstehen Folgekosten fuer Monitoring, Betrieb und Wartung.",
+        `Benefits: Quelle ${item.sourceName} liefert hier ein starkes Fruehsignal. Richtig umgesetzt reduziert das Risiko von Fehlentscheidungen, beschleunigt Iterationen und verbessert eure Priorisierung.`,
+      ],
     });
   }
   

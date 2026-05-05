@@ -5,7 +5,7 @@ import {
   NewsItem,
 } from "@/lib/feed-data";
 import { persistNewsSnapshot } from "@/lib/news-store";
-import { collectFromSources } from "@/lib/sources";
+import { collectFromSourcesReport, SourceCollectionStats } from "@/lib/sources";
 
 const MIN_REAL_ITEMS = 3;
 
@@ -20,7 +20,8 @@ function rankNews(items: NewsItem[]): NewsItem[] {
 }
 
 export async function collectNewsItems(): Promise<NewsItem[]> {
-  const fromSources = await collectFromSources();
+  const report = await collectFromSourcesReport();
+  const fromSources = report.items;
   if (fromSources.length >= MIN_REAL_ITEMS) {
     return rankNews(fromSources);
   }
@@ -31,21 +32,52 @@ export async function collectNewsItems(): Promise<NewsItem[]> {
   return rankNews(dailyNews);
 }
 
+export async function collectNewsItemsWithStats(): Promise<{
+  items: NewsItem[];
+  stats: SourceCollectionStats;
+  usedSeedFallback: boolean;
+}> {
+  const report = await collectFromSourcesReport();
+  if (report.items.length >= MIN_REAL_ITEMS) {
+    return {
+      items: rankNews(report.items),
+      stats: report.stats,
+      usedSeedFallback: false,
+    };
+  }
+
+  console.warn(
+    `[ingestion] only ${report.items.length} real items collected, falling back to seed`,
+  );
+  return {
+    items: rankNews(dailyNews),
+    stats: report.stats,
+    usedSeedFallback: true,
+  };
+}
+
 export async function collectBenchmarkItems(): Promise<BenchmarkSummary[]> {
   return benchmarkBoard;
 }
 
 export async function runIngestion(mode: "interval" | "digest" | "manual") {
   const [items, benchmarks] = await Promise.all([
-    collectNewsItems(),
+    collectNewsItemsWithStats(),
     collectBenchmarkItems(),
   ]);
+  const newsItems = items.items;
 
-  const persistResult = await persistNewsSnapshot({ mode, items, benchmarks });
+  const persistResult = await persistNewsSnapshot({
+    mode,
+    items: newsItems,
+    benchmarks,
+  });
 
   return {
     mode,
-    sourceCount: items.length,
+    sourceCount: newsItems.length,
+    sourceStats: items.stats,
+    usedSeedFallback: items.usedSeedFallback,
     benchmarkSourceCount: benchmarks.length,
     persistedCount: persistResult.persistedCount,
     persistedBenchmarkCount: persistResult.benchmarkCount,

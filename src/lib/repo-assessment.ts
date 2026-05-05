@@ -129,7 +129,7 @@ export async function getRepoAssessment({
 
   const headers: HeadersInit = {
     Accept: "application/vnd.github+json",
-    "User-Agent": "ai-workflow-radar",
+    "User-Agent": "hook-ai",
   };
 
   if (process.env.GITHUB_TOKEN) {

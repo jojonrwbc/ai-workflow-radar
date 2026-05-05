@@ -7,14 +7,16 @@ type LanguageMode = "de" | "en";
 
 function getTheme(): ThemeMode {
   if (typeof window === "undefined") return "light";
-  const saved = localStorage.getItem("awr-theme");
+  const saved =
+    localStorage.getItem("hookai-theme") ?? localStorage.getItem("awr-theme");
   if (saved === "dark" || saved === "light") return saved;
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 function getLanguage(): LanguageMode {
   if (typeof window === "undefined") return "de";
-  const saved = localStorage.getItem("awr-language");
+  const saved =
+    localStorage.getItem("hookai-language") ?? localStorage.getItem("awr-language");
   if (saved === "en" || saved === "de") return saved;
   return "de";
 }
@@ -29,6 +31,7 @@ export function ThemeToggle() {
   function toggleTheme() {
     const nextTheme: ThemeMode = theme === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", nextTheme);
+    localStorage.setItem("hookai-theme", nextTheme);
     localStorage.setItem("awr-theme", nextTheme);
     window.dispatchEvent(new Event("storage"));
   }
@@ -37,7 +40,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="fixed top-4 right-4 z-50 flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--bg-panel)] min-h-11 min-w-11 px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+      className="inline-flex min-h-10 min-w-12 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--bg-panel)] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.16em] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
       aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
     >
       {theme === "light" ? "Dark" : "Light"}
@@ -50,6 +53,7 @@ export function LanguageToggle() {
 
   function toggleLanguage() {
     const nextLang: LanguageMode = language === "de" ? "en" : "de";
+    localStorage.setItem("hookai-language", nextLang);
     localStorage.setItem("awr-language", nextLang);
     window.location.reload();
   }
@@ -58,7 +62,7 @@ export function LanguageToggle() {
     <button
       type="button"
       onClick={toggleLanguage}
-      className="fixed top-4 right-20 z-50 flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--bg-panel)] min-h-11 min-w-11 px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+      className="inline-flex min-h-10 min-w-12 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--bg-panel)] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.16em] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
       aria-label={`Switch to ${language === "de" ? "English" : "Deutsch"}`}
     >
       {language === "de" ? "EN" : "DE"}
