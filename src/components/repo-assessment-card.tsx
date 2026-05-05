@@ -24,7 +24,7 @@ function ScoreScale({ label, value }: { label: string; value: number }) {
         {segments.map((segment) => (
           <span
             key={segment}
-            className={`h-2 rounded-sm border border-radar-stroke ${
+            className={`h-2 rounded-sm border border-radar-line ${
               segment < activeSegments ? "bg-radar-accent" : "bg-radar-soft"
             }`}
           />
@@ -77,7 +77,7 @@ export function RepoAssessmentCard({
 
   if (errorMessage) {
     return (
-      <section className="rounded-2xl border border-radar-stroke bg-radar-panel p-4">
+      <section className="rounded-2xl border border-radar-line bg-radar-panel p-4">
         <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-radar-muted">
           Repo Bewertung
         </h2>
@@ -88,7 +88,7 @@ export function RepoAssessmentCard({
 
   if (!assessment) {
     return (
-      <section className="rounded-2xl border border-radar-stroke bg-radar-panel p-4">
+      <section className="rounded-2xl border border-radar-line bg-radar-panel p-4">
         <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-radar-muted">
           Repo Bewertung
         </h2>
@@ -100,7 +100,7 @@ export function RepoAssessmentCard({
   }
 
   return (
-    <section className="rounded-2xl border border-radar-stroke bg-radar-panel p-4">
+    <section className="rounded-2xl border border-radar-line bg-radar-panel p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-radar-muted">
@@ -112,7 +112,7 @@ export function RepoAssessmentCard({
           href={assessment.repoUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-full border border-radar-stroke bg-radar-soft px-2.5 py-1 text-xs font-medium text-radar-ink hover:bg-radar-accent-soft"
+          className="rounded-full border border-radar-line bg-radar-soft px-2.5 py-1 text-xs font-medium text-radar-ink hover:bg-radar-accent-soft"
         >
           GitHub
         </a>

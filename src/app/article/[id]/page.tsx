@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { RepoAssessmentCard } from "@/components/repo-assessment-card";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageToggle, ThemeToggle } from "@/components/theme-toggle";
 import { NewsItem } from "@/lib/feed-data";
 
 function formatDate(value: string) {
@@ -17,7 +17,25 @@ function formatDate(value: string) {
 }
 
 function shouldBypassImageOptimizer(src: string): boolean {
-  return src.startsWith("/api/source-image?");
+  return src.startsWith("/api/source-image?") || src.startsWith("/api/cover-image?");
+}
+
+function getFallbackThumbnail(category: NewsItem["category"]): string {
+  switch (category) {
+    case "MCP":
+      return "/thumbnails/mcp-registry.svg";
+    case "CLI":
+      return "/thumbnails/cli-release.svg";
+    case "Model Release":
+      return "/thumbnails/model-notes.svg";
+    case "Benchmark":
+      return "/thumbnails/benchmark-shift.svg";
+    case "Workflow":
+    case "Open Source Infra":
+    case "Open Source":
+    default:
+      return "/thumbnails/open-eval.svg";
+  }
 }
 
 export default function ArticlePage() {
@@ -28,6 +46,7 @@ export default function ArticlePage() {
   const [state, setState] = useState<"loading" | "ready" | "error">(
     isInvalidId ? "error" : "loading",
   );
+  const [heroImageSrc, setHeroImageSrc] = useState<string | null>(null);
 
   useEffect(() => {
     if (isInvalidId) {
@@ -44,6 +63,7 @@ export default function ArticlePage() {
 
         const payload = (await response.json()) as NewsItem;
         setItem(payload);
+        setHeroImageSrc(payload.imagePath);
         setState("ready");
       })
       .catch(() => setState("error"));
@@ -54,7 +74,7 @@ export default function ArticlePage() {
   if (state === "loading") {
     return (
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-radar-stroke bg-radar-panel px-5 py-8">
+        <div className="rounded-2xl border border-radar-line bg-radar-panel px-5 py-8">
           <p className="text-sm text-radar-muted">Lade Artikel ...</p>
         </div>
       </main>
@@ -64,11 +84,11 @@ export default function ArticlePage() {
   if (state === "error" || !item) {
     return (
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-radar-stroke bg-radar-panel px-5 py-8">
+        <div className="rounded-2xl border border-radar-line bg-radar-panel px-5 py-8">
           <p className="text-sm text-radar-muted">Artikel konnte nicht geladen werden.</p>
           <Link
             href="/"
-            className="mt-4 inline-flex rounded-full border border-radar-stroke px-4 py-2 text-sm font-medium text-radar-ink hover:bg-radar-soft"
+            className="mt-4 inline-flex rounded-full border border-radar-line px-4 py-2 text-sm font-medium text-radar-ink hover:bg-radar-soft"
           >
             Zurueck zum Feed
           </Link>
@@ -82,25 +102,29 @@ export default function ArticlePage() {
       <div className="mb-4 flex items-center justify-between gap-3">
         <Link
           href="/"
-          className="inline-flex w-fit rounded-full border border-radar-stroke bg-radar-panel px-4 py-2 text-sm font-medium text-radar-ink hover:bg-radar-soft"
+          className="inline-flex w-fit rounded-full border border-radar-line bg-radar-panel px-4 py-2 text-sm font-medium text-radar-ink hover:bg-radar-soft"
         >
-          Zurueck zum Feed
+          Zurueck zum Hauptfeed
         </Link>
-        <ThemeToggle />
+        <div className="flex items-center gap-2 rounded-full border border-radar-line bg-radar-soft px-2 py-1">
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
       </div>
 
-      <article className="overflow-hidden rounded-2xl border border-radar-stroke bg-radar-panel">
+      <article className="overflow-hidden rounded-2xl border border-radar-line bg-radar-panel">
         <div className="relative h-56 w-full sm:h-72">
           <Image
-            src={item.imagePath}
+            src={heroImageSrc ?? item.imagePath}
             alt={item.imageLabel}
             fill
             className="object-cover"
             sizes="100vw"
             priority
-            unoptimized={shouldBypassImageOptimizer(item.imagePath)}
+            unoptimized={shouldBypassImageOptimizer(heroImageSrc ?? item.imagePath)}
+            onError={() => setHeroImageSrc(getFallbackThumbnail(item.category))}
           />
-          <div className="absolute left-4 top-4 rounded-full border border-radar-stroke bg-radar-panel px-3 py-1 text-xs font-medium text-radar-ink">
+          <div className="absolute left-4 top-4 rounded-full border border-radar-line bg-radar-panel px-3 py-1 text-xs font-medium text-radar-ink">
             {item.category}
           </div>
         </div>
@@ -124,7 +148,7 @@ export default function ArticlePage() {
             </details>
           </div>
 
-          <section className="rounded-xl border border-radar-stroke bg-radar-soft p-4">
+          <section className="rounded-xl border border-radar-line bg-radar-soft p-4">
             <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-radar-muted">
               Kurzfassung
             </h2>
@@ -152,17 +176,17 @@ export default function ArticlePage() {
           ) : null}
 
           {item.commands ? (
-            <section className="rounded-xl border border-radar-stroke bg-radar-panel p-4">
+            <section className="rounded-xl border border-radar-line bg-radar-panel p-4">
               <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-radar-ink">
                 Direkt nutzbar
               </h2>
               {item.commands.install ? (
-                <p className="mt-2 rounded-lg border border-radar-stroke bg-radar-soft px-3 py-2 font-mono text-xs text-radar-ink">
+                <p className="mt-2 rounded-lg border border-radar-line bg-radar-soft px-3 py-2 font-mono text-xs text-radar-ink">
                   install: {item.commands.install}
                 </p>
               ) : null}
               {item.commands.run ? (
-                <p className="mt-2 rounded-lg border border-radar-stroke bg-radar-soft px-3 py-2 font-mono text-xs text-radar-ink">
+                <p className="mt-2 rounded-lg border border-radar-line bg-radar-soft px-3 py-2 font-mono text-xs text-radar-ink">
                   run: {item.commands.run}
                 </p>
               ) : null}
@@ -171,7 +195,7 @@ export default function ArticlePage() {
                   href={item.commands.docsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 inline-flex rounded-full border border-radar-stroke px-3 py-1.5 text-xs font-medium text-radar-ink hover:bg-radar-soft"
+                  className="mt-3 inline-flex rounded-full border border-radar-line px-3 py-1.5 text-xs font-medium text-radar-ink hover:bg-radar-soft"
                 >
                   Dokumentation oeffnen
                 </a>
@@ -179,7 +203,7 @@ export default function ArticlePage() {
             </section>
           ) : null}
 
-          <section className="rounded-xl border border-radar-stroke bg-radar-panel p-4">
+          <section className="rounded-xl border border-radar-line bg-radar-panel p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-radar-ink">
               Quelle
             </h2>
@@ -188,7 +212,7 @@ export default function ArticlePage() {
               href={item.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 inline-flex rounded-full border border-radar-mint bg-radar-mint px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+              className="mt-2 inline-flex rounded-full border border-[var(--accent)] bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[var(--accent-ink)] hover:opacity-90"
             >
               Originalartikel lesen
             </a>
